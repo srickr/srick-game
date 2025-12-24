@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivinhe V11 - 12 Partes (+Celebridades)</title>
+    <style>
+        /* --- ESTILOS CSS (Mantidos os mesmos da V10) --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 5px; text-align: center; }
+        p.instructions { margin-bottom: 15px; text-align: center; color: #bdc3c7; font-size: 0.9rem; }
+        
+        #answer-display {
+            color: #f39c12; /* Cor laranja para destaque */
+            background-color: rgba(0,0,0,0.2);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none; /* Começa escondido */
+            width: 80%;
+            max-width: 780px;
+            word-wrap: break-word;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background-color: #34495e;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-text {
+            position: absolute;
+            z-index: 0;
+            color: #bdc3c7;
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 20px;
+        }
+        #secret-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            opacity: 0; 
+            transition: opacity 0.4s ease-in;
+        }
+        #secret-image.loaded { opacity: 1; }
+        
+        #cover-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            z-index: 2;
+        }
+        .cover-panel {
+            background-color: #95a5a6;
+            border: 2px solid #7f8c8d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem; 
+            font-weight: bold;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: opacity 0.2s ease-out, background-color 0.2s;
+            user-select: none;
+        }
+        .cover-panel:hover { background-color: #bdc3c7; }
+        .cover-panel.revealed {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease-in;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        button:hover { background-color: #2980b9; transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+        button#guess-btn { background-color: #27ae60; }
+        button#guess-btn:hover { background-color: #219653; }
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: 1px solid #bdc3c7;
+            width: 250px;
+        }
+        button:disabled {
+            background-color: #7f8c8d !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        @media (max-width: 850px) {
+            #game-container { width: 95vw; height: 60vw; }
+            .cover-panel { font-size: 2rem; }
+            input[type="text"] { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Adivinhe a Imagem (Objetos e Celebridades)</h1>
+    <p class="instructions">Clique nos 12 números para revelar e tente adivinhar.</p>
+
+    <h2 id="answer-display"></h2>
+
+    <div id="game-container">
+        <span class="loading-text" id="loading-message">Conectando ao Unsplash...</span>
+        <img id="secret-image" src="" alt="Imagem Secreta">
+        <div id="cover-grid"></div>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="guess-input" placeholder="Digite seu palpite...">
+        <button id="guess-btn">✅ Verificar</button>
+        <button id="new-game-btn">🔄 Buscar Nova Imagem</button>
+    </div>
+
+    <script>
+        // ==================================================================
+        // CONFIGURAÇÃO DA API
+        const UNSPLASH_ACCESS_KEY = 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg'; 
+        
+        // --- MUDANÇA AQUI ---
+        // Adicionei novos IDs de coleções focadas em retratos e celebridades
+        // (IDs antigos de objetos + Novos IDs de pessoas)
+        const COLLECTION_IDS = '3330452,8791381,2203881,10469534,158642,8240068,219941,367837,162436';
+
+        const API_URL = `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&collections=${COLLECTION_IDS}&orientation=landscape&content_filter=high`;
+        // ==================================================================
+
+        // --- Variáveis de Estado ---
+        let currentImageName = "";
+        let isGameLocked = false;
+        let revealedCount = 0;
+        const TOTAL_PANELS = 12;
+
+        // --- Elementos do DOM ---
+        const secretImageElement = document.getElementById('secret-image');
+        const coverGrid = document.getElementById('cover-grid');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const guessBtn = document.getElementById('guess-btn');
+        const guessInput = document.getElementById('guess-input');
+        const loadingMessage = document.getElementById('loading-message');
+        const answerDisplay = document.getElementById('answer-display');
+
+        // --- Funções Auxiliares ---
+        function createGrid() {
+            coverGrid.innerHTML = ''; 
+            for (let i = 1; i <= TOTAL_PANELS; i++) {
+                const panel = document.createElement('div');
+                panel.classList.add('cover-panel');
+                panel.innerText = i;
+                panel.addEventListener('click', function() {
+                    if (!isGameLocked && !this.classList.contains('revealed')) {
+                        this.classList.add('revealed');
+                        revealedCount++;
+                        
+                        if (revealedCount === TOTAL_PANELS) {
+                            showAnswer(`Fim de jogo! A imagem era: "${currentImageName}"`);
+                        }
+                    }
+                });
+                coverGrid.appendChild(panel);
+            }
+        }
+
+        function showAnswer(message) {
+            answerDisplay.innerText = message;
+            answerDisplay.style.display = 'block'; 
+        }
+
+        function normalizeString(str) {
+             if (!str) return "imagem desconhecida";
+             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        // --- FUNÇÃO: BUSCAR IMAGEM NA API ---
+        async function fetchNewImageFromAPI() {
+            try {
+                loadingMessage.innerText = "Buscando imagem variada na nuvem...";
+                console.log("Iniciando busca filtrada na API...");
+                
+                const response = await fetch(API_URL);
+
+                if (!response.ok) {
+                    if(response.status === 401) throw new Error("Chave de API inválida.");
+                    if(response.status === 403) throw new Error("Limite da API excedido.");
+                    throw new Error(`Erro na API: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Dados recebidos:", data);
+
+                // Lógica para tentar encontrar o melhor nome possível
+                let finalName = data.alt_description || data.description;
+                
+                // Para celebridades, muitas vezes o nome está nas tags e não na descrição
+                if (!finalName && data.tags && data.tags.length > 0) {
+                     // Tenta pegar uma tag que pareça um nome próprio (geralmente a primeira)
+                     finalName = data.tags[0].title;
+                } else if (!finalName) {
+                     finalName = "Imagem misteriosa";
+                }
+
+                return { name: finalName, src: data.urls.regular };
+
+            } catch (error) {
+                console.error("Falha ao buscar imagem:", error);
+                loadingMessage.innerText = `Erro: ${error.message}`;
+                alert(`Ops! Erro na API.\n\n${error.message}`);
+                return null;
+            }
+        }
+
+
+        // --- Lógica Principal do Jogo ---
+
+        async function startNewGame() {
+            if (isGameLocked) return; 
+            isGameLocked = true;
+            
+            newGameBtn.disabled = true;
+            newGameBtn.innerText = "Conectando...";
+
+            secretImageElement.classList.remove('loaded');
+            secretImageElement.style.transition = 'none';
+            secretImageElement.style.opacity = '0';
+            revealedCount = 0; 
+            guessInput.value = '';
+            
+            answerDisplay.style.display = 'none';
+            answerDisplay.innerText = '';
+
+            document.querySelectorAll('.cover-panel').forEach(p => p.classList.remove('revealed'));
+
+            const imageData = await fetchNewImageFromAPI();
+
+            if (!imageData) {
+                 isGameLocked = false;
+                 newGameBtn.disabled = false;
+                 newGameBtn.innerText = "Tentar Novamente";
+                 return;
+            }
+
+            currentImageName = imageData.name;
+            console.log(`Dica: ${currentImageName}`);
+            loadingMessage.innerText = "Carregando imagem...";
+
+            secretImageElement.src = imageData.src;
+
+            secretImageElement.onload = function() {
+                secretImageElement.style.transition = '';
+                secretImageElement.style.opacity = '';
+                secretImageElement.classList.add('loaded');
+                
+                isGameLocked = false;
+                newGameBtn.disabled = false;
+                newGameBtn.innerText = "🔄 Buscar Nova Imagem";
+                guessInput.focus();
+            };
+             
+             secretImageElement.onerror = function() {
+                 loadingMessage.innerText = "Erro ao exibir a imagem. Tente outra.";
+                 isGameLocked = false;
+                 newGameBtn.disabled = false;
+                 newGameBtn.innerText = "Tentar Outra";
+             }
+        }
+
+        function checkGuess() {
+            if (isGameLocked) return;
+            
+            const userGuessNorm = normalizeString(guessInput.value);
+            const correctAnswerNorm = normalizeString(currentImageName);
+
+            if (userGuessNorm.length >= 3 && correctAnswerNorm.includes(userGuessNorm)) {
+                showAnswer(`✅ Acertou! A descrição era: "${currentImageName}"`);
+                
+                document.querySelectorAll('.cover-panel').forEach(p => {
+                    p.classList.add('revealed');
+                });
+                revealedCount = TOTAL_PANELS; 
+            } else {
+                alert("Não é bem isso. Tente ser mais específico ou use outra palavra-chave!");
+                guessInput.focus();
+            }
+        }
+
+        // --- Event Listeners ---
+        guessBtn.addEventListener('click', checkGuess);
+        guessInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') checkGuess(); });
+        newGameBtn.addEventListener('click', startNewGame);
+
+        // --- Inicialização ---
+        createGrid();
+        startNewGame();
+
+    </script>
+</body>
+</html>
