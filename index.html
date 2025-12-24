@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivinhe V11 - 12 Partes (+Celebridades)</title>
+    <title>Adivinhe V12 - Botões de Controle</title>
     <style>
-        /* --- ESTILOS CSS (Mantidos os mesmos da V10) --- */
+        /* --- ESTILOS CSS (Mantidos os mesmos da V11) --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #2c3e50;
@@ -21,13 +21,13 @@
         p.instructions { margin-bottom: 15px; text-align: center; color: #bdc3c7; font-size: 0.9rem; }
         
         #answer-display {
-            color: #f39c12; /* Cor laranja para destaque */
+            color: #f39c12;
             background-color: rgba(0,0,0,0.2);
             padding: 10px 20px;
             border-radius: 10px;
             margin-bottom: 15px;
             text-align: center;
-            display: none; /* Começa escondido */
+            display: none;
             width: 80%;
             max-width: 780px;
             word-wrap: break-word;
@@ -78,6 +78,8 @@
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(3, 1fr);
             z-index: 2;
+            /* MUDANÇA: Remove o cursor de mãozinha dos painéis, pois não são mais clicáveis */
+            pointer-events: none;
         }
         .cover-panel {
             background-color: #95a5a6;
@@ -88,14 +90,14 @@
             font-size: 2.5rem; 
             font-weight: bold;
             color: #2c3e50;
-            cursor: pointer;
+            /* cursor: pointer; REMOVIDO */
             transition: opacity 0.2s ease-out, background-color 0.2s;
             user-select: none;
         }
-        .cover-panel:hover { background-color: #bdc3c7; }
+        /* .cover-panel:hover { background-color: #bdc3c7; } REMOVIDO HOVER */
+        
         .cover-panel.revealed {
             opacity: 0;
-            pointer-events: none;
             transition: opacity 0.5s ease-in;
         }
         .controls {
@@ -105,6 +107,7 @@
             flex-wrap: wrap;
             justify-content: center;
             max-width: 800px;
+            padding-bottom: 30px; /* Espaço extra no final */
         }
         button {
             padding: 12px 20px;
@@ -114,12 +117,20 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
         }
         button:hover { background-color: #2980b9; transform: translateY(-2px); }
         button:active { transform: translateY(0); }
         button#guess-btn { background-color: #27ae60; }
         button#guess-btn:hover { background-color: #219653; }
+        
+        /* Estilos para os novos botões */
+        button#random-reveal-btn { background-color: #e67e22; }
+        button#random-reveal-btn:hover { background-color: #d35400; }
+        
+        button#reveal-all-btn { background-color: #c0392b; }
+        button#reveal-all-btn:hover { background-color: #a93226; }
+
         input[type="text"] {
             padding: 12px;
             font-size: 1rem;
@@ -127,10 +138,12 @@
             border: 1px solid #bdc3c7;
             width: 250px;
         }
+        /* Estilo para botões desabilitados */
         button:disabled {
-            background-color: #7f8c8d !important;
+            background-color: #95a5a6 !important;
             cursor: not-allowed;
             transform: none !important;
+            opacity: 0.7;
         }
         @media (max-width: 850px) {
             #game-container { width: 95vw; height: 60vw; }
@@ -141,8 +154,8 @@
 </head>
 <body>
 
-    <h1>Adivinhe a Imagem (Objetos e Celebridades)</h1>
-    <p class="instructions">Clique nos 12 números para revelar e tente adivinhar.</p>
+    <h1>Adivinhe a Imagem</h1>
+    <p class="instructions">Use o botão "Revelar Aleatório" para abrir partes da imagem e tente adivinhar.</p>
 
     <h2 id="answer-display"></h2>
 
@@ -153,21 +166,22 @@
     </div>
 
     <div class="controls">
-        <input type="text" id="guess-input" placeholder="Digite seu palpite...">
-        <button id="guess-btn">✅ Verificar</button>
+        <div style="width: 100%; display: flex; justify-content: center; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="guess-input" placeholder="Digite seu palpite...">
+            <button id="guess-btn">✅ Verificar</button>
+        </div>
+
+        <button id="random-reveal-btn">🎲 Revelar Aleatório</button>
+        <button id="reveal-all-btn">🏳️ Desistir (Revelar Tudo)</button>
+        
         <button id="new-game-btn">🔄 Buscar Nova Imagem</button>
     </div>
 
     <script>
         // ==================================================================
-        // CONFIGURAÇÃO DA API
+        // CONFIGURAÇÃO DA API (Mantida da V11)
         const UNSPLASH_ACCESS_KEY = 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg'; 
-        
-        // --- MUDANÇA AQUI ---
-        // Adicionei novos IDs de coleções focadas em retratos e celebridades
-        // (IDs antigos de objetos + Novos IDs de pessoas)
         const COLLECTION_IDS = '3330452,8791381,2203881,10469534,158642,8240068,219941,367837,162436';
-
         const API_URL = `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&collections=${COLLECTION_IDS}&orientation=landscape&content_filter=high`;
         // ==================================================================
 
@@ -177,7 +191,7 @@
         let revealedCount = 0;
         const TOTAL_PANELS = 12;
 
-        // --- Elementos do DOM ---
+        // --- Elementos do DOM (Novos botões adicionados) ---
         const secretImageElement = document.getElementById('secret-image');
         const coverGrid = document.getElementById('cover-grid');
         const newGameBtn = document.getElementById('new-game-btn');
@@ -185,6 +199,9 @@
         const guessInput = document.getElementById('guess-input');
         const loadingMessage = document.getElementById('loading-message');
         const answerDisplay = document.getElementById('answer-display');
+        // Referências para os novos botões
+        const randomRevealBtn = document.getElementById('random-reveal-btn');
+        const revealAllBtn = document.getElementById('reveal-all-btn');
 
         // --- Funções Auxiliares ---
         function createGrid() {
@@ -193,16 +210,8 @@
                 const panel = document.createElement('div');
                 panel.classList.add('cover-panel');
                 panel.innerText = i;
-                panel.addEventListener('click', function() {
-                    if (!isGameLocked && !this.classList.contains('revealed')) {
-                        this.classList.add('revealed');
-                        revealedCount++;
-                        
-                        if (revealedCount === TOTAL_PANELS) {
-                            showAnswer(`Fim de jogo! A imagem era: "${currentImageName}"`);
-                        }
-                    }
-                });
+                // MUDANÇA CRÍTICA: Removido o addEventListener('click') daqui.
+                // Os painéis não são mais clicáveis individualmente.
                 coverGrid.appendChild(panel);
             }
         }
@@ -217,36 +226,62 @@
              return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
         }
 
+        // --- FUNÇÕES DOS NOVOS BOTÕES ---
+
+        // MUDANÇA 1: Função para revelar um quadrado aleatório
+        function revealRandomPanel() {
+            // Se o jogo tá travado ou já revelou tudo, não faz nada
+            if (isGameLocked || revealedCount === TOTAL_PANELS) return;
+
+            // Encontra todos os painéis que AINDA NÃO têm a classe 'revealed'
+            const hiddenPanels = document.querySelectorAll('.cover-panel:not(.revealed)');
+
+            if (hiddenPanels.length > 0) {
+                // Sorteia um índice baseado na quantidade de painéis escondidos
+                const randomIndex = Math.floor(Math.random() * hiddenPanels.length);
+                // Pega o elemento correspondente ao índice sorteado
+                const panelToReveal = hiddenPanels[randomIndex];
+
+                // Revela ele
+                panelToReveal.classList.add('revealed');
+                revealedCount++;
+
+                // Verifica fim de jogo
+                if (revealedCount === TOTAL_PANELS) {
+                     showAnswer(`Fim de jogo! A imagem era: "${currentImageName}"`);
+                }
+            }
+        }
+
+        // MUDANÇA 2: Função para revelar tudo (Desistir)
+        function revealAllPanels() {
+             if (isGameLocked || revealedCount === TOTAL_PANELS) return;
+
+             // Pega todos os painéis e adiciona a classe revealed
+             document.querySelectorAll('.cover-panel').forEach(p => p.classList.add('revealed'));
+             
+             // Atualiza o contador para o máximo
+             revealedCount = TOTAL_PANELS;
+             
+             // Mostra a resposta final
+             showAnswer(`Você finalizou a rodada. A imagem era: "${currentImageName}"`);
+        }
+
+
         // --- FUNÇÃO: BUSCAR IMAGEM NA API ---
         async function fetchNewImageFromAPI() {
             try {
-                loadingMessage.innerText = "Buscando imagem variada na nuvem...";
-                console.log("Iniciando busca filtrada na API...");
-                
+                loadingMessage.innerText = "Buscando imagem na nuvem...";
                 const response = await fetch(API_URL);
-
-                if (!response.ok) {
-                    if(response.status === 401) throw new Error("Chave de API inválida.");
-                    if(response.status === 403) throw new Error("Limite da API excedido.");
-                    throw new Error(`Erro na API: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
                 const data = await response.json();
-                console.log("Dados recebidos:", data);
-
-                // Lógica para tentar encontrar o melhor nome possível
                 let finalName = data.alt_description || data.description;
-                
-                // Para celebridades, muitas vezes o nome está nas tags e não na descrição
                 if (!finalName && data.tags && data.tags.length > 0) {
-                     // Tenta pegar uma tag que pareça um nome próprio (geralmente a primeira)
                      finalName = data.tags[0].title;
                 } else if (!finalName) {
                      finalName = "Imagem misteriosa";
                 }
-
                 return { name: finalName, src: data.urls.regular };
-
             } catch (error) {
                 console.error("Falha ao buscar imagem:", error);
                 loadingMessage.innerText = `Erro: ${error.message}`;
@@ -262,8 +297,12 @@
             if (isGameLocked) return; 
             isGameLocked = true;
             
+            // Desabilita todos os botões de controle enquanto carrega
             newGameBtn.disabled = true;
-            newGameBtn.innerText = "Conectando...";
+            randomRevealBtn.disabled = true;
+            revealAllBtn.disabled = true;
+            guessBtn.disabled = true;
+            newGameBtn.innerText = "Carregando...";
 
             secretImageElement.classList.remove('loaded');
             secretImageElement.style.transition = 'none';
@@ -279,6 +318,7 @@
             const imageData = await fetchNewImageFromAPI();
 
             if (!imageData) {
+                 // Se falhou, reabilita o botão de nova imagem apenas
                  isGameLocked = false;
                  newGameBtn.disabled = false;
                  newGameBtn.innerText = "Tentar Novamente";
@@ -297,7 +337,11 @@
                 secretImageElement.classList.add('loaded');
                 
                 isGameLocked = false;
+                // Reabilita todos os botões
                 newGameBtn.disabled = false;
+                randomRevealBtn.disabled = false;
+                revealAllBtn.disabled = false;
+                guessBtn.disabled = false;
                 newGameBtn.innerText = "🔄 Buscar Nova Imagem";
                 guessInput.focus();
             };
@@ -329,10 +373,14 @@
             }
         }
 
-        // --- Event Listeners ---
+        // --- Event Listeners (Adicionados os novos botões) ---
         guessBtn.addEventListener('click', checkGuess);
         guessInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') checkGuess(); });
         newGameBtn.addEventListener('click', startNewGame);
+        
+        // Listeners para os novos botões
+        randomRevealBtn.addEventListener('click', revealRandomPanel);
+        revealAllBtn.addEventListener('click', revealAllPanels);
 
         // --- Inicialização ---
         createGrid();
