@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivinhe V14 - Modo Revelação (Sem Palpites)</title>
+    <title>Adivinhe V19 - Fluxo de Conferência</title>
     <style>
-        /* --- ESTILOS CSS (Simplificados V14) --- */
+        /* --- ESTILOS CSS (Base V18 - Sem alterações visuais) --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #2c3e50;
@@ -13,46 +13,79 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             margin: 0;
             padding: 20px;
+            box-sizing: border-box;
         }
-        h1 { margin-bottom: 5px; text-align: center; }
-        /* Instruções atualizadas para o novo modo de jogo */
-        p.instructions { margin-bottom: 15px; text-align: center; color: #bdc3c7; font-size: 0.9rem; }
+
+        h1 { margin: 0 0 10px 0; text-align: center; font-size: 2.5rem; }
+        p.instructions { margin-bottom: 10px; text-align: center; color: #bdc3c7; font-size: 1.1rem; }
         
+        #scoreboard {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            background-color: rgba(0,0,0,0.3);
+            padding: 15px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .score-item { display: flex; align-items: center; gap: 10px; }
+        .s1-color { color: #e74c3c; }
+        .s2-color { color: #3498db; }
+        .score-num { font-size: 2.5rem; }
+
         #answer-display {
             color: #f39c12;
-            background-color: rgba(0,0,0,0.2);
-            padding: 10px 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            background-color: rgba(0,0,0,0.3);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
             text-align: center;
             display: none;
-            width: 80%;
-            max-width: 780px;
+            width: 90%;
+            max-width: 1100px;
             word-wrap: break-word;
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.8rem;
+        }
+
+        .main-content-wrapper {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
         }
 
         #game-container {
             position: relative;
-            width: 800px;
-            height: 500px;
+            width: 1100px;
+            height: 687px; 
+            max-width: 75vw;
+            max-height: 75vh;
+            aspect-ratio: 16 / 10; 
             background-color: #34495e;
-            border-radius: 10px;
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-shrink: 1;
         }
+
         .loading-text {
             position: absolute;
             z-index: 0;
             color: #bdc3c7;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             text-align: center;
             padding: 20px;
         }
@@ -83,86 +116,127 @@
         }
         .cover-panel {
             background-color: #95a5a6;
-            border: 2px solid #7f8c8d;
+            border: 3px solid #7f8c8d;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2.5rem; 
+            font-size: 4rem; 
             font-weight: bold;
             color: #2c3e50;
             transition: opacity 0.2s ease-out, background-color 0.2s;
             user-select: none;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
         }
-        
-        .cover-panel.revealed {
-            opacity: 0;
-            transition: opacity 0.5s ease-in;
-        }
+        .cover-panel.revealed { opacity: 0; transition: opacity 0.5s ease-in; }
+
         .controls {
-            margin-top: 20px;
             display: flex;
-            gap: 15px; /* Aumentei um pouco o espaço entre os botões */
-            flex-wrap: wrap;
+            flex-direction: column; 
+            gap: 15px;
             justify-content: center;
-            max-width: 800px;
-            padding-bottom: 30px;
+            min-width: 280px;
+            flex-shrink: 0;
         }
+
+        .team-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
         button {
-            padding: 12px 24px; /* Botões um pouco maiores */
-            font-size: 1.1rem;
+            padding: 15px 20px;
+            font-size: 1.2rem;
             background-color: #3498db;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             cursor: pointer;
             transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 100%;
         }
         button:hover { background-color: #2980b9; transform: translateY(-2px); }
-        button:active { transform: translateY(0); }
+        button:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         
-        /* Cores dos novos botões */
-        button#random-reveal-btn { background-color: #e67e22; } /* Laranja */
-        button#random-reveal-btn:hover { background-color: #d35400; }
+        button#team1-btn { background-color: #e74c3c; font-weight: bold; }
+        button#team1-btn:hover { background-color: #c0392b; }
+        button#team2-btn { background-color: #3498db; font-weight: bold; }
+        button#team2-btn:hover { background-color: #2980b9; }
+
+        .win-btn { background-color: #2ecc71; font-size: 1.1rem; }
+        .win-btn:hover { background-color: #27ae60; }
         
-        button#reveal-all-btn { background-color: #27ae60; } /* Verde */
-        button#reveal-all-btn:hover { background-color: #219653; }
+        /* Cor alterada para um tom mais de "aviso" ou "ação neutra" */
+        button#reveal-all-btn { background-color: #e67e22; font-size: 1.1rem; margin-top: 10px; color: white; } 
+        button#reveal-all-btn:hover { background-color: #d35400; }
+        
+        button#new-game-btn { background-color: #f39c12; font-weight: bold; font-size: 1.3rem; margin-top: 10px;} 
+        button#new-game-btn:hover { background-color: #e67e22; }
 
         button:disabled {
-            background-color: #95a5a6 !important;
+            background-color: #576574 !important;
+            color: #bdc3c7 !important;
             cursor: not-allowed;
             transform: none !important;
-            opacity: 0.7;
+            opacity: 0.6;
+            box-shadow: none;
         }
-        @media (max-width: 850px) {
-            #game-container { width: 95vw; height: 60vw; }
-            .cover-panel { font-size: 2rem; }
-            /* Ajuste para botões em telas pequenas */
-            button { padding: 10px 15px; font-size: 1rem; }
+
+        @media (max-width: 1100px) {
+            .main-content-wrapper { flex-direction: column; gap: 25px; }
+            #game-container { max-width: 95vw; width: 95vw; height: auto; }
+            .controls { flex-direction: row; flex-wrap: wrap; width: 100%; min-width: auto; align-items: flex-start;}
+            .team-group { flex-basis: 45%; border-bottom: none; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 10px; }
+            .team-group:last-child { border-right: none; }
+            #reveal-all-btn, #new-game-btn { flex-basis: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Descubra a Imagem</h1>
-    <p class="instructions">Vá abrindo os quadrados até descobrir o que é a imagem.</p>
+    <h1>Descubra a Imagem: Gincana TV</h1>
+    <p class="instructions">Revelem a imagem por turnos. Use "Revelar para Conferir" se alguém chutar.</p>
+
+    <div id="scoreboard">
+        <div class="score-item s1-color">🔴 Equipe 1: <span class="score-num" id="score1">0</span></div>
+        <div style="color: #7f8c8d;">|</div>
+        <div class="score-item s2-color">🔵 Equipe 2: <span class="score-num" id="score2">0</span></div>
+    </div>
 
     <h2 id="answer-display"></h2>
 
-    <div id="game-container">
-        <span class="loading-text" id="loading-message">Conectando à coleção Srick-Game...</span>
-        <img id="secret-image" src="" alt="Imagem Secreta">
-        <div id="cover-grid"></div>
-    </div>
+    <div class="main-content-wrapper">
+        
+        <div id="game-container">
+            <span class="loading-text" id="loading-message">Conectando à coleção Srick-Game...</span>
+            <img id="secret-image" src="" alt="Imagem Secreta">
+            <div id="cover-grid"></div>
+        </div>
 
-    <div class="controls">
-        <button id="random-reveal-btn">▶️ Abrir Próximo</button>
-        <button id="reveal-all-btn">👁️ Revelar Imagem</button>
-        <button id="new-game-btn">🔄 Buscar Nova Imagem</button>
+        <div class="controls">
+            
+            <div class="team-group">
+                <button id="team1-btn">🔴 Equipe 1: Jogar</button>
+                <button id="team1-win" class="win-btn">✅ Ponto para Equipe 1</button>
+            </div>
+
+            <div class="team-group">
+                <button id="team2-btn">🔵 Equipe 2: Jogar</button>
+                <button id="team2-win" class="win-btn">✅ Ponto para Equipe 2</button>
+            </div>
+            
+            <button id="reveal-all-btn">👁️ Revelar para Conferir</button>
+            <button id="new-game-btn">🔄 Próxima Rodada</button>
+        </div>
+
     </div>
 
     <script>
         // ==================================================================
-        // CONFIGURAÇÃO DA API (Mantida V13)
+        // CONFIGURAÇÃO DA API
         const UNSPLASH_ACCESS_KEY = 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg'; 
         const COLLECTION_IDS = 'ocVKfLLqYe0';
         const API_URL = `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&collections=${COLLECTION_IDS}`;
@@ -170,9 +244,15 @@
 
         // --- Variáveis de Estado ---
         let currentImageName = "";
-        let isGameLocked = false;
+        let isGameLoading = false; // Usando nome mais claro que isGameLocked
         let revealedCount = 0;
         const TOTAL_PANELS = 12;
+        let currentTurn = 'team1'; 
+        // NOVO ESTADO: Indica se a rodada já foi finalizada (ponto dado ou pulada)
+        let isRoundFinished = false; 
+        
+        let scoreTeam1 = 0;
+        let scoreTeam2 = 0;
 
         // --- Elementos do DOM ---
         const secretImageElement = document.getElementById('secret-image');
@@ -180,9 +260,14 @@
         const newGameBtn = document.getElementById('new-game-btn');
         const loadingMessage = document.getElementById('loading-message');
         const answerDisplay = document.getElementById('answer-display');
-        const randomRevealBtn = document.getElementById('random-reveal-btn');
+        
+        const team1Btn = document.getElementById('team1-btn');
+        const team2Btn = document.getElementById('team2-btn');
         const revealAllBtn = document.getElementById('reveal-all-btn');
-        // REMOVIDO: Referências ao input e botão de palpite
+        const score1Display = document.getElementById('score1');
+        const score2Display = document.getElementById('score2');
+        const team1WinBtn = document.getElementById('team1-win');
+        const team2WinBtn = document.getElementById('team2-win');
 
         // --- Funções Auxiliares ---
         function createGrid() {
@@ -199,29 +284,116 @@
             answerDisplay.innerText = message;
             answerDisplay.style.display = 'block'; 
         }
-        // REMOVIDO: Função normalizeString (não é mais necessária)
+
+        function updateScoreDisplay() {
+            score1Display.innerText = scoreTeam1;
+            score2Display.innerText = scoreTeam2;
+        }
+
+        // FUNÇÃO CENTRAL DE CONTROLE DOS BOTÕES (Lógica principal da V19)
+        function updateButtonsState() {
+            // 1. Se o jogo está carregando, trava TUDO.
+            if (isGameLoading) {
+                team1Btn.disabled = true; team2Btn.disabled = true;
+                team1WinBtn.disabled = true; team2WinBtn.disabled = true;
+                revealAllBtn.disabled = true; newGameBtn.disabled = true;
+                return;
+            }
+
+            // 2. Se a rodada foi FINALIZADA (ponto dado ou pulada manualmente)
+            if (isRoundFinished) {
+                // Trava tudo, exceto "Próxima Rodada"
+                team1Btn.disabled = true; team2Btn.disabled = true;
+                team1WinBtn.disabled = true; team2WinBtn.disabled = true;
+                revealAllBtn.disabled = true;
+                newGameBtn.disabled = false;
+                return;
+            }
+
+            // 3. Jogo em andamento (imagem pode estar parcial ou totalmente revelada)
+            
+            // O botão de Próxima Rodada está sempre ativo se não estiver carregando
+            newGameBtn.disabled = false;
+
+            // Os botões de PONTO e REVELAR estão sempre ativos enquanto a rodada não finaliza
+            team1WinBtn.disabled = false;
+            team2WinBtn.disabled = false;
+            // O botão de revelar só desabilita se já estiver tudo revelado
+            revealAllBtn.disabled = (revealedCount === TOTAL_PANELS);
+
+
+            // Gerenciamento dos botões de TURNO (jogar dado)
+            // Eles só funcionam se a imagem NÃO estiver totalmente revelada
+            if (revealedCount === TOTAL_PANELS) {
+                team1Btn.disabled = true;
+                team2Btn.disabled = true;
+            } else {
+                if (currentTurn === 'team1') {
+                    team1Btn.disabled = false; team2Btn.disabled = true;
+                    team1Btn.innerText = "🔴 Equipe 1: SUA VEZ ▶️"; team2Btn.innerText = "🔵 Equipe 2: Aguarde...";
+                } else {
+                    team1Btn.disabled = true; team2Btn.disabled = false;
+                    team1Btn.innerText = "🔴 Equipe 1: Aguarde..."; team2Btn.innerText = "🔵 Equipe 2: SUA VEZ ▶️";
+                }
+            }
+        }
 
         // --- FUNÇÕES DOS BOTÕES ---
+        
         function revealRandomPanel() {
-            if (isGameLocked || revealedCount === TOTAL_PANELS) return;
+            if (isGameLoading || isRoundFinished || revealedCount === TOTAL_PANELS) return;
+            
             const hiddenPanels = document.querySelectorAll('.cover-panel:not(.revealed)');
             if (hiddenPanels.length > 0) {
                 const randomIndex = Math.floor(Math.random() * hiddenPanels.length);
                 hiddenPanels[randomIndex].classList.add('revealed');
                 revealedCount++;
+
                 if (revealedCount === TOTAL_PANELS) {
-                     // Se abriu o último quadrado um por um
-                     showAnswer(`Imagem completa: "${currentImageName}"`);
+                     // Chegou ao final passo a passo. Mostra msg para conferir.
+                     showAnswer(`Imagem totalmente revelada! Se alguém acertou, marquem o ponto.`);
+                } else {
+                    currentTurn = (currentTurn === 'team1' ? 'team2' : 'team1');
                 }
+                updateButtonsState();
             }
         }
 
-        function revealAllPanels() {
-             if (isGameLocked || revealedCount === TOTAL_PANELS) return;
+        // Função de Vitória (Dá o ponto e finaliza a rodada)
+        function handleTeamWin(winningTeam) {
+            if (isGameLoading || isRoundFinished) return;
+
+            if (winningTeam === 'team1') {
+                scoreTeam1++;
+                showAnswer(`🎉 PONTO PARA EQUIPE 1! A imagem era: "${currentImageName}"`);
+            } else {
+                scoreTeam2++;
+                showAnswer(`🎉 PONTO PARA EQUIPE 2! A imagem era: "${currentImageName}"`);
+            }
+            updateScoreDisplay();
+            
+            // Revela tudo se ainda não estava
+            document.querySelectorAll('.cover-panel').forEach(p => p.classList.add('revealed'));
+            revealedCount = TOTAL_PANELS;
+            
+            // MARCA A RODADA COMO FINALIZADA
+            isRoundFinished = true;
+            updateButtonsState();
+        }
+
+
+        // Função "Revelar para Conferir" (NÃO finaliza a rodada)
+        function revealAllPanelsForChecking() {
+             if (isGameLoading || isRoundFinished || revealedCount === TOTAL_PANELS) return;
+             
              document.querySelectorAll('.cover-panel').forEach(p => p.classList.add('revealed'));
              revealedCount = TOTAL_PANELS;
-             // Texto atualizado para "Revelar Imagem"
-             showAnswer(`Imagem revelada: "${currentImageName}"`);
+             
+             // Mensagem clara de que agora é hora de conferir
+             showAnswer(`Imagem revelada para conferência! Se o palpite estava certo, marquem o ponto da equipe abaixo. Descrição: "${currentImageName}"`);
+             
+             // Atualiza estados (vai travar os botões de turno, mas manter os de ponto ativos)
+             updateButtonsState();
         }
 
 
@@ -253,37 +425,33 @@
         // --- Lógica Principal do Jogo ---
 
         async function startNewGame() {
-            if (isGameLocked) return; 
-            isGameLocked = true;
-            
-            // Desabilita botões
-            newGameBtn.disabled = true;
-            randomRevealBtn.disabled = true;
-            revealAllBtn.disabled = true;
+            if (isGameLoading) return; 
+            isGameLoading = true;
+            updateButtonsState(); // Trava tudo
+
             newGameBtn.innerText = "Carregando...";
 
-            // Reseta visual
             secretImageElement.classList.remove('loaded');
             secretImageElement.style.transition = 'none';
             secretImageElement.style.opacity = '0';
             revealedCount = 0; 
-            // REMOVIDO: Reset do input value
+            // Reseta o estado de finalização da rodada
+            isRoundFinished = false;
+             
             answerDisplay.style.display = 'none';
             answerDisplay.innerText = '';
             document.querySelectorAll('.cover-panel').forEach(p => p.classList.remove('revealed'));
 
-            // Busca imagem
             const imageData = await fetchNewImageFromAPI();
 
             if (!imageData) {
-                 isGameLocked = false;
-                 newGameBtn.disabled = false;
+                 isGameLoading = false;
+                 updateButtonsState(); // Destrava para tentar de novo
                  newGameBtn.innerText = "Tentar Novamente";
                  return;
             }
 
             currentImageName = imageData.name;
-            console.log(`Debug - Descrição: ${currentImageName}`);
             loadingMessage.innerText = "Carregando imagem...";
 
             secretImageElement.src = imageData.src;
@@ -293,33 +461,36 @@
                 secretImageElement.style.opacity = '';
                 secretImageElement.classList.add('loaded');
                 
-                isGameLocked = false;
-                // Reabilita botões
-                newGameBtn.disabled = false;
-                randomRevealBtn.disabled = false;
-                revealAllBtn.disabled = false;
-                newGameBtn.innerText = "🔄 Buscar Nova Imagem";
-                // REMOVIDO: focus() no input
+                isGameLoading = false;
+                newGameBtn.innerText = "🔄 Próxima Rodada";
+                
+                // Inicia a rodada e libera os botões corretos
+                updateButtonsState();
             };
              
              secretImageElement.onerror = function() {
                  loadingMessage.innerText = "Erro ao exibir a imagem. Tente outra.";
-                 isGameLocked = false;
-                 newGameBtn.disabled = false;
+                 isGameLoading = false;
+                 updateButtonsState();
                  newGameBtn.innerText = "Tentar Outra";
              }
         }
         
-        // REMOVIDO: Função checkGuess() inteira
-
         // --- Event Listeners ---
         newGameBtn.addEventListener('click', startNewGame);
-        randomRevealBtn.addEventListener('click', revealRandomPanel);
-        revealAllBtn.addEventListener('click', revealAllPanels);
-        // REMOVIDO: Listeners do botão e input de palpite
+        
+        team1Btn.addEventListener('click', revealRandomPanel);
+        team2Btn.addEventListener('click', revealRandomPanel);
+        
+        team1WinBtn.addEventListener('click', () => handleTeamWin('team1'));
+        team2WinBtn.addEventListener('click', () => handleTeamWin('team2'));
+
+        // Agora chama a função de conferência
+        revealAllBtn.addEventListener('click', revealAllPanelsForChecking);
 
         // --- Inicialização ---
         createGrid();
+        updateScoreDisplay(); 
         startNewGame();
 
     </script>
