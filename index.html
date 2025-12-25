@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivinhe V12 - Botões de Controle</title>
+    <title>Adivinhe V14 - Modo Revelação (Sem Palpites)</title>
     <style>
-        /* --- ESTILOS CSS (Mantidos os mesmos da V11) --- */
+        /* --- ESTILOS CSS (Simplificados V14) --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #2c3e50;
@@ -18,6 +18,7 @@
             padding: 20px;
         }
         h1 { margin-bottom: 5px; text-align: center; }
+        /* Instruções atualizadas para o novo modo de jogo */
         p.instructions { margin-bottom: 15px; text-align: center; color: #bdc3c7; font-size: 0.9rem; }
         
         #answer-display {
@@ -78,7 +79,6 @@
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(3, 1fr);
             z-index: 2;
-            /* MUDANÇA: Remove o cursor de mãozinha dos painéis, pois não são mais clicáveis */
             pointer-events: none;
         }
         .cover-panel {
@@ -90,11 +90,9 @@
             font-size: 2.5rem; 
             font-weight: bold;
             color: #2c3e50;
-            /* cursor: pointer; REMOVIDO */
             transition: opacity 0.2s ease-out, background-color 0.2s;
             user-select: none;
         }
-        /* .cover-panel:hover { background-color: #bdc3c7; } REMOVIDO HOVER */
         
         .cover-panel.revealed {
             opacity: 0;
@@ -103,15 +101,15 @@
         .controls {
             margin-top: 20px;
             display: flex;
-            gap: 10px;
+            gap: 15px; /* Aumentei um pouco o espaço entre os botões */
             flex-wrap: wrap;
             justify-content: center;
             max-width: 800px;
-            padding-bottom: 30px; /* Espaço extra no final */
+            padding-bottom: 30px;
         }
         button {
-            padding: 12px 20px;
-            font-size: 1rem;
+            padding: 12px 24px; /* Botões um pouco maiores */
+            font-size: 1.1rem;
             background-color: #3498db;
             color: white;
             border: none;
@@ -121,24 +119,14 @@
         }
         button:hover { background-color: #2980b9; transform: translateY(-2px); }
         button:active { transform: translateY(0); }
-        button#guess-btn { background-color: #27ae60; }
-        button#guess-btn:hover { background-color: #219653; }
         
-        /* Estilos para os novos botões */
-        button#random-reveal-btn { background-color: #e67e22; }
+        /* Cores dos novos botões */
+        button#random-reveal-btn { background-color: #e67e22; } /* Laranja */
         button#random-reveal-btn:hover { background-color: #d35400; }
         
-        button#reveal-all-btn { background-color: #c0392b; }
-        button#reveal-all-btn:hover { background-color: #a93226; }
+        button#reveal-all-btn { background-color: #27ae60; } /* Verde */
+        button#reveal-all-btn:hover { background-color: #219653; }
 
-        input[type="text"] {
-            padding: 12px;
-            font-size: 1rem;
-            border-radius: 5px;
-            border: 1px solid #bdc3c7;
-            width: 250px;
-        }
-        /* Estilo para botões desabilitados */
         button:disabled {
             background-color: #95a5a6 !important;
             cursor: not-allowed;
@@ -148,41 +136,36 @@
         @media (max-width: 850px) {
             #game-container { width: 95vw; height: 60vw; }
             .cover-panel { font-size: 2rem; }
-            input[type="text"] { width: 100%; }
+            /* Ajuste para botões em telas pequenas */
+            button { padding: 10px 15px; font-size: 1rem; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Adivinhe a Imagem</h1>
-    <p class="instructions">Use o botão "Revelar Aleatório" para abrir partes da imagem e tente adivinhar.</p>
+    <h1>Descubra a Imagem</h1>
+    <p class="instructions">Vá abrindo os quadrados até descobrir o que é a imagem.</p>
 
     <h2 id="answer-display"></h2>
 
     <div id="game-container">
-        <span class="loading-text" id="loading-message">Conectando ao Unsplash...</span>
+        <span class="loading-text" id="loading-message">Conectando à coleção Srick-Game...</span>
         <img id="secret-image" src="" alt="Imagem Secreta">
         <div id="cover-grid"></div>
     </div>
 
     <div class="controls">
-        <div style="width: 100%; display: flex; justify-content: center; gap: 10px; margin-bottom: 10px;">
-            <input type="text" id="guess-input" placeholder="Digite seu palpite...">
-            <button id="guess-btn">✅ Verificar</button>
-        </div>
-
-        <button id="random-reveal-btn">🎲 Revelar Aleatório</button>
-        <button id="reveal-all-btn">🏳️ Desistir (Revelar Tudo)</button>
-        
+        <button id="random-reveal-btn">▶️ Abrir Próximo</button>
+        <button id="reveal-all-btn">👁️ Revelar Imagem</button>
         <button id="new-game-btn">🔄 Buscar Nova Imagem</button>
     </div>
 
     <script>
         // ==================================================================
-        // CONFIGURAÇÃO DA API (Mantida da V11)
+        // CONFIGURAÇÃO DA API (Mantida V13)
         const UNSPLASH_ACCESS_KEY = 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg'; 
-        const COLLECTION_IDS = '3330452,8791381,2203881,10469534,158642,8240068,219941,367837,162436';
-        const API_URL = `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&collections=${COLLECTION_IDS}&orientation=landscape&content_filter=high`;
+        const COLLECTION_IDS = 'ocVKfLLqYe0';
+        const API_URL = `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&collections=${COLLECTION_IDS}`;
         // ==================================================================
 
         // --- Variáveis de Estado ---
@@ -191,17 +174,15 @@
         let revealedCount = 0;
         const TOTAL_PANELS = 12;
 
-        // --- Elementos do DOM (Novos botões adicionados) ---
+        // --- Elementos do DOM ---
         const secretImageElement = document.getElementById('secret-image');
         const coverGrid = document.getElementById('cover-grid');
         const newGameBtn = document.getElementById('new-game-btn');
-        const guessBtn = document.getElementById('guess-btn');
-        const guessInput = document.getElementById('guess-input');
         const loadingMessage = document.getElementById('loading-message');
         const answerDisplay = document.getElementById('answer-display');
-        // Referências para os novos botões
         const randomRevealBtn = document.getElementById('random-reveal-btn');
         const revealAllBtn = document.getElementById('reveal-all-btn');
+        // REMOVIDO: Referências ao input e botão de palpite
 
         // --- Funções Auxiliares ---
         function createGrid() {
@@ -210,8 +191,6 @@
                 const panel = document.createElement('div');
                 panel.classList.add('cover-panel');
                 panel.innerText = i;
-                // MUDANÇA CRÍTICA: Removido o addEventListener('click') daqui.
-                // Os painéis não são mais clicáveis individualmente.
                 coverGrid.appendChild(panel);
             }
         }
@@ -220,67 +199,47 @@
             answerDisplay.innerText = message;
             answerDisplay.style.display = 'block'; 
         }
+        // REMOVIDO: Função normalizeString (não é mais necessária)
 
-        function normalizeString(str) {
-             if (!str) return "imagem desconhecida";
-             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-        }
-
-        // --- FUNÇÕES DOS NOVOS BOTÕES ---
-
-        // MUDANÇA 1: Função para revelar um quadrado aleatório
+        // --- FUNÇÕES DOS BOTÕES ---
         function revealRandomPanel() {
-            // Se o jogo tá travado ou já revelou tudo, não faz nada
             if (isGameLocked || revealedCount === TOTAL_PANELS) return;
-
-            // Encontra todos os painéis que AINDA NÃO têm a classe 'revealed'
             const hiddenPanels = document.querySelectorAll('.cover-panel:not(.revealed)');
-
             if (hiddenPanels.length > 0) {
-                // Sorteia um índice baseado na quantidade de painéis escondidos
                 const randomIndex = Math.floor(Math.random() * hiddenPanels.length);
-                // Pega o elemento correspondente ao índice sorteado
-                const panelToReveal = hiddenPanels[randomIndex];
-
-                // Revela ele
-                panelToReveal.classList.add('revealed');
+                hiddenPanels[randomIndex].classList.add('revealed');
                 revealedCount++;
-
-                // Verifica fim de jogo
                 if (revealedCount === TOTAL_PANELS) {
-                     showAnswer(`Fim de jogo! A imagem era: "${currentImageName}"`);
+                     // Se abriu o último quadrado um por um
+                     showAnswer(`Imagem completa: "${currentImageName}"`);
                 }
             }
         }
 
-        // MUDANÇA 2: Função para revelar tudo (Desistir)
         function revealAllPanels() {
              if (isGameLocked || revealedCount === TOTAL_PANELS) return;
-
-             // Pega todos os painéis e adiciona a classe revealed
              document.querySelectorAll('.cover-panel').forEach(p => p.classList.add('revealed'));
-             
-             // Atualiza o contador para o máximo
              revealedCount = TOTAL_PANELS;
-             
-             // Mostra a resposta final
-             showAnswer(`Você finalizou a rodada. A imagem era: "${currentImageName}"`);
+             // Texto atualizado para "Revelar Imagem"
+             showAnswer(`Imagem revelada: "${currentImageName}"`);
         }
 
 
         // --- FUNÇÃO: BUSCAR IMAGEM NA API ---
         async function fetchNewImageFromAPI() {
             try {
-                loadingMessage.innerText = "Buscando imagem na nuvem...";
+                loadingMessage.innerText = "Buscando imagem na coleção...";
                 const response = await fetch(API_URL);
                 if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
                 const data = await response.json();
+                
                 let finalName = data.alt_description || data.description;
                 if (!finalName && data.tags && data.tags.length > 0) {
                      finalName = data.tags[0].title;
                 } else if (!finalName) {
-                     finalName = "Imagem misteriosa";
+                     finalName = "Imagem sem descrição";
                 }
+                
                 return { name: finalName, src: data.urls.regular };
             } catch (error) {
                 console.error("Falha ao buscar imagem:", error);
@@ -297,28 +256,26 @@
             if (isGameLocked) return; 
             isGameLocked = true;
             
-            // Desabilita todos os botões de controle enquanto carrega
+            // Desabilita botões
             newGameBtn.disabled = true;
             randomRevealBtn.disabled = true;
             revealAllBtn.disabled = true;
-            guessBtn.disabled = true;
             newGameBtn.innerText = "Carregando...";
 
+            // Reseta visual
             secretImageElement.classList.remove('loaded');
             secretImageElement.style.transition = 'none';
             secretImageElement.style.opacity = '0';
             revealedCount = 0; 
-            guessInput.value = '';
-            
+            // REMOVIDO: Reset do input value
             answerDisplay.style.display = 'none';
             answerDisplay.innerText = '';
-
             document.querySelectorAll('.cover-panel').forEach(p => p.classList.remove('revealed'));
 
+            // Busca imagem
             const imageData = await fetchNewImageFromAPI();
 
             if (!imageData) {
-                 // Se falhou, reabilita o botão de nova imagem apenas
                  isGameLocked = false;
                  newGameBtn.disabled = false;
                  newGameBtn.innerText = "Tentar Novamente";
@@ -326,7 +283,7 @@
             }
 
             currentImageName = imageData.name;
-            console.log(`Dica: ${currentImageName}`);
+            console.log(`Debug - Descrição: ${currentImageName}`);
             loadingMessage.innerText = "Carregando imagem...";
 
             secretImageElement.src = imageData.src;
@@ -337,13 +294,12 @@
                 secretImageElement.classList.add('loaded');
                 
                 isGameLocked = false;
-                // Reabilita todos os botões
+                // Reabilita botões
                 newGameBtn.disabled = false;
                 randomRevealBtn.disabled = false;
                 revealAllBtn.disabled = false;
-                guessBtn.disabled = false;
                 newGameBtn.innerText = "🔄 Buscar Nova Imagem";
-                guessInput.focus();
+                // REMOVIDO: focus() no input
             };
              
              secretImageElement.onerror = function() {
@@ -353,34 +309,14 @@
                  newGameBtn.innerText = "Tentar Outra";
              }
         }
-
-        function checkGuess() {
-            if (isGameLocked) return;
-            
-            const userGuessNorm = normalizeString(guessInput.value);
-            const correctAnswerNorm = normalizeString(currentImageName);
-
-            if (userGuessNorm.length >= 3 && correctAnswerNorm.includes(userGuessNorm)) {
-                showAnswer(`✅ Acertou! A descrição era: "${currentImageName}"`);
-                
-                document.querySelectorAll('.cover-panel').forEach(p => {
-                    p.classList.add('revealed');
-                });
-                revealedCount = TOTAL_PANELS; 
-            } else {
-                alert("Não é bem isso. Tente ser mais específico ou use outra palavra-chave!");
-                guessInput.focus();
-            }
-        }
-
-        // --- Event Listeners (Adicionados os novos botões) ---
-        guessBtn.addEventListener('click', checkGuess);
-        guessInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') checkGuess(); });
-        newGameBtn.addEventListener('click', startNewGame);
         
-        // Listeners para os novos botões
+        // REMOVIDO: Função checkGuess() inteira
+
+        // --- Event Listeners ---
+        newGameBtn.addEventListener('click', startNewGame);
         randomRevealBtn.addEventListener('click', revealRandomPanel);
         revealAllBtn.addEventListener('click', revealAllPanels);
+        // REMOVIDO: Listeners do botão e input de palpite
 
         // --- Inicialização ---
         createGrid();
