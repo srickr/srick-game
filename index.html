@@ -3,496 +3,462 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivinhe V19 - Fluxo de Conferência</title>
+    <title>Srick Game - V35 (Compact Layout)</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
-        /* --- ESTILOS CSS (Base V18 - Sem alterações visuais) --- */
+        :root {
+            --primary-bg: #1a252f;
+            --panel-bg: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
+            --team1-color: #e74c3c;
+            --team2-color: #3498db;
+            --win-color: #2ecc71;
+            --accent-color: #f39c12;
+            --timeout-color: #c0392b;
+            --sidebar-bg: rgba(0, 0, 0, 0.3);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #2c3e50;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--primary-bg);
             color: #ecf0f1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; margin: 0; padding: 10px; /* Reduzi padding */
+            box-sizing: border-box; overflow-x: hidden; 
         }
 
-        h1 { margin: 0 0 10px 0; text-align: center; font-size: 2.5rem; }
-        p.instructions { margin-bottom: 10px; text-align: center; color: #bdc3c7; font-size: 1.1rem; }
+        /* Reduzi tamanho e margem do título para ganhar espaço */
+        h1 { margin: 0 0 5px 0; font-size: 2rem; letter-spacing: 2px; text-transform: uppercase; color: var(--accent-color); text-shadow: 2px 2px 4px rgba(0,0,0,0.5); text-align: center; }
         
-        #scoreboard {
-            display: flex;
-            gap: 30px;
-            margin-bottom: 20px;
-            font-size: 2rem;
-            font-weight: bold;
-            background-color: rgba(0,0,0,0.3);
-            padding: 15px 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .score-item { display: flex; align-items: center; gap: 10px; }
-        .s1-color { color: #e74c3c; }
-        .s2-color { color: #3498db; }
-        .score-num { font-size: 2.5rem; }
-
-        #answer-display {
-            color: #f39c12;
-            background-color: rgba(0,0,0,0.3);
-            padding: 15px 25px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            text-align: center;
-            display: none;
-            width: 90%;
-            max-width: 1100px;
-            word-wrap: break-word;
-            font-weight: bold;
-            font-size: 1.8rem;
+        #header-container {
+            display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 15px; width: 100%;
         }
 
-        .main-content-wrapper {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            gap: 40px;
-            width: 100%;
-            max-width: 1400px;
+        /* --- CONFIGURAÇÕES (Agora inclui o botão de histórico) --- */
+        #settings-bar {
+            display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.05); padding: 5px 15px; border-radius: 10px; flex-wrap: wrap; justify-content: center;
         }
+        
+        .setting-item { display: flex; align-items: center; gap: 5px; }
+        .setting-item label { font-size: 0.8rem; color: #bdc3c7; white-space: nowrap; }
 
-        #game-container {
-            position: relative;
-            width: 1100px;
-            height: 687px; 
-            max-width: 75vw;
-            max-height: 75vh;
-            aspect-ratio: 16 / 10; 
-            background-color: #34495e;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 1;
+        select {
+            background: #34495e; color: white; border: 1px solid #7f8c8d; padding: 3px 8px; border-radius: 5px; font-size: 0.9rem; cursor: pointer;
         }
+        select:disabled { opacity: 0.5; cursor: not-allowed; background: #2c3e50; }
 
-        .loading-text {
-            position: absolute;
-            z-index: 0;
-            color: #bdc3c7;
-            font-size: 1.5rem;
-            text-align: center;
-            padding: 20px;
+        #sound-toggle {
+            background: none; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
         }
-        #secret-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            opacity: 0; 
-            transition: opacity 0.4s ease-in;
+        #sound-toggle:hover { background: rgba(255,255,255,0.1); }
+        #sound-toggle.muted { opacity: 0.5; filter: grayscale(1); border-color: #e74c3c; color: #e74c3c; }
+
+        #reset-history-btn {
+            background: none; border: 1px solid #7f8c8d; color: #bdc3c7; padding: 3px 10px; border-radius: 15px; font-size: 0.7rem; cursor: pointer; transition: all 0.3s; margin-left: 10px;
         }
+        #reset-history-btn:hover { background: var(--team1-color); color: white; border-color: var(--team1-color); }
+
+        /* --- LAYOUT PRINCIPAL --- */
+        #main-content_wrapper { display: flex; flex-direction: row; justify-content: center; align-items: flex-start; gap: 20px; width: 100%; max-width: 1200px; height: 100%; }
+        
+        #game-container-wrapper { 
+            flex: 3; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; 
+            /* Importante para não empurrar muito pra baixo */
+            min-height: auto; 
+        }
+        
+        #game-container { position: relative; background: #2c3e50; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: flex; transition: width 0.3s, height 0.3s; }
+        #secret-image { width: 100%; height: 100%; object-fit: fill; display: block; opacity: 0; transition: opacity 0.5s; }
         #secret-image.loaded { opacity: 1; }
+        #cover-grid { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); z-index: 2; pointer-events: none; }
+        .cover-panel { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 0 15px rgba(0,0,0,0.2); display: flex; justify-content: center; align-items: center; font-size: clamp(1.5rem, 5cqw, 3.5rem); font-weight: 900; color: rgba(44, 62, 80, 0.8); transition: transform 0.5s, opacity 0.5s; }
+        #game-container { container-type: inline-size; }
+        .cover-panel.revealed { opacity: 0; transform: scale(1.2); }
+
+        /* --- BARRA LATERAL (Agora com Placar) --- */
+        .controls-sidebar { 
+            flex: 1; min-width: 280px; background: var(--sidebar-bg); padding: 20px; border-radius: 20px; 
+            display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(5px); 
+            /* Ajuste para caber na tela sem scroll se possível */
+            max-height: 90vh; overflow-y: auto; 
+        }
+
+        /* --- NOVO PLACAR NA SIDEBAR --- */
+        #sidebar-scoreboard {
+            display: flex; justify-content: space-around; align-items: center;
+            background: rgba(0,0,0,0.4); padding: 15px; border-radius: 15px;
+            font-size: 1.8rem; font-weight: bold; margin-bottom: 5px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .score-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .score-label { font-size: 0.7rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+
+        .control-group { background: rgba(255, 255, 255, 0.05); padding: 10px; border-radius: 15px; display: flex; flex-direction: column; gap: 8px; position: relative; transition: all 0.3s; border: 2px solid transparent; }
+        .control-group.active-status { background: rgba(255, 255, 255, 0.1); box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+
+        .team-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+        .team-name { font-weight: bold; font-size: 1rem; }
         
-        #cover-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            z-index: 2;
-            pointer-events: none;
-        }
-        .cover-panel {
-            background-color: #95a5a6;
-            border: 3px solid #7f8c8d;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 4rem; 
-            font-weight: bold;
-            color: #2c3e50;
-            transition: opacity 0.2s ease-out, background-color 0.2s;
-            user-select: none;
-            text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
-        }
-        .cover-panel.revealed { opacity: 0; transition: opacity 0.5s ease-in; }
+        .timer-display { font-family: 'Courier New', monospace; font-weight: bold; font-size: 1.1rem; color: #ecf0f1; background: rgba(0,0,0,0.5); padding: 1px 6px; border-radius: 5px; opacity: 0; transition: opacity 0.3s; }
+        .timer-display.visible { opacity: 1; }
+        .timer-display.warning { color: #e74c3c; animation: pulse-fast 0.5s infinite; }
 
-        .controls {
-            display: flex;
-            flex-direction: column; 
-            gap: 15px;
-            justify-content: center;
-            min-width: 280px;
-            flex-shrink: 0;
-        }
-
-        .team-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        button {
-            padding: 15px 20px;
-            font-size: 1.2rem;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            width: 100%;
-        }
-        button:hover { background-color: #2980b9; transform: translateY(-2px); }
-        button:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .status-badge { font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; background: #fff; color: #333; font-weight: bold; display: none; text-transform: uppercase; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .status-badge.jogando { animation: pulse 1.5s infinite; }
+        .status-badge.timeout { background: var(--timeout-color); color: white; display: inline-block !important; animation: shake 0.5s; }
         
-        button#team1-btn { background-color: #e74c3c; font-weight: bold; }
-        button#team1-btn:hover { background-color: #c0392b; }
-        button#team2-btn { background-color: #3498db; font-weight: bold; }
-        button#team2-btn:hover { background-color: #2980b9; }
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+        @keyframes pulse-fast { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
 
-        .win-btn { background-color: #2ecc71; font-size: 1.1rem; }
-        .win-btn:hover { background-color: #27ae60; }
+        .team-row { display: flex; gap: 8px; width: 100%; }
+        button { padding: 12px 10px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); display: flex; justify-content: center; align-items: center; text-align: center; color: white; }
+        button:active { transform: translateY(3px); box-shadow: none; }
+        button:disabled { opacity: 0.5 !important; cursor: not-allowed; filter: grayscale(0.6); transform: none; box-shadow: none; }
+
+        .btn-vez { flex: 2.5; font-size: 0.9rem; text-transform: uppercase; line-height: 1.2; }
+        .btn-ponto { flex: 1; font-size: 0.8rem; background: var(--win-color) !important; flex-direction: column; gap: 2px; }
+
+        #team1-btn { background: var(--team1-color); }
+        #team2-btn { background: var(--team2-color); }
         
-        /* Cor alterada para um tom mais de "aviso" ou "ação neutra" */
-        button#reveal-all-btn { background-color: #e67e22; font-size: 1.1rem; margin-top: 10px; color: white; } 
-        button#reveal-all-btn:hover { background-color: #d35400; }
+        #actions-container { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+        #reveal-all-btn { background: var(--reveal-all-color); font-size: 0.9rem; padding: 12px; width: 100%; }
+        #new-game-btn { background: var(--accent-color); font-size: 1.1rem; padding: 12px; width: 100%; }
         
-        button#new-game-btn { background-color: #f39c12; font-weight: bold; font-size: 1.3rem; margin-top: 10px;} 
-        button#new-game-btn:hover { background-color: #e67e22; }
+        #answer-display { display: none; background: rgba(243, 156, 18, 0.2); border: 2px solid var(--accent-color); padding: 10px; border-radius: 15px; color: var(--accent-color); margin-bottom: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; width: 100%; max-width: 800px; }
 
-        button:disabled {
-            background-color: #576574 !important;
-            color: #bdc3c7 !important;
-            cursor: not-allowed;
-            transform: none !important;
-            opacity: 0.6;
-            box-shadow: none;
-        }
-
-        @media (max-width: 1100px) {
-            .main-content-wrapper { flex-direction: column; gap: 25px; }
-            #game-container { max-width: 95vw; width: 95vw; height: auto; }
-            .controls { flex-direction: row; flex-wrap: wrap; width: 100%; min-width: auto; align-items: flex-start;}
-            .team-group { flex-basis: 45%; border-bottom: none; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 10px; }
-            .team-group:last-child { border-right: none; }
-            #reveal-all-btn, #new-game-btn { flex-basis: 100%; }
+        @media (max-width: 900px) { 
+            #main-content_wrapper { flex-direction: column; align-items: center; } 
+            .controls-sidebar { width: 100%; max-width: 600px; max-height: none; } 
+            #game-container-wrapper { margin-bottom: 20px; } 
+            #sidebar-scoreboard { flex-direction: row; font-size: 1.5rem; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Descubra a Imagem: Gincana TV</h1>
-    <p class="instructions">Revelem a imagem por turnos. Use "Revelar para Conferir" se alguém chutar.</p>
+    <div id="header-container">
+        <h1>Srick Game</h1>
+        
+        <div id="settings-bar">
+            <div class="setting-item">
+                <label>Pontos:</label>
+                <select id="max-points"></select>
+            </div>
+            
+            <div class="setting-item">
+                <label>Tempo:</label>
+                <select id="turn-timer">
+                    <option value="30">30s</option>
+                    <option value="60" selected>60s</option>
+                    <option value="90">90s</option>
+                    <option value="120">120s</option>
+                    <option value="9999">Off</option>
+                </select>
+            </div>
 
-    <div id="scoreboard">
-        <div class="score-item s1-color">🔴 Equipe 1: <span class="score-num" id="score1">0</span></div>
-        <div style="color: #7f8c8d;">|</div>
-        <div class="score-item s2-color">🔵 Equipe 2: <span class="score-num" id="score2">0</span></div>
+            <div class="setting-item">
+                <label>Fonte:</label>
+                <select id="image-source">
+                    <option value="unsplash">Unsplash</option>
+                    <option value="pexels" selected>Pexels</option>
+                </select>
+            </div>
+
+            <button id="sound-toggle" title="Ligar/Desligar Som">🔊</button>
+            <button id="reset-history-btn" title="Limpar imagens já vistas">Limpar Histórico</button>
+        </div>
+        <div id="history-count" style="font-size: 0.7rem; color: #7f8c8d; margin-top:0;">Imagens únicas vistas: 0</div>
     </div>
 
-    <h2 id="answer-display"></h2>
-
-    <div class="main-content-wrapper">
-        
-        <div id="game-container">
-            <span class="loading-text" id="loading-message">Conectando à coleção Srick-Game...</span>
-            <img id="secret-image" src="" alt="Imagem Secreta">
-            <div id="cover-grid"></div>
+    <div id="main-content_wrapper">
+        <div id="game-container-wrapper">
+            <div id="answer-display"></div>
+            <div id="game-container">
+                <div id="loading-message" style="position:absolute; z-index:10; font-size: 1.5rem; font-weight: bold; color: white; text-shadow: 1px 1px 3px black;">Carregando...</div>
+                <img id="secret-image" src="">
+                <div id="cover-grid"></div>
+            </div>
         </div>
 
-        <div class="controls">
+        <div class="controls-sidebar">
             
-            <div class="team-group">
-                <button id="team1-btn">🔴 Equipe 1: Jogar</button>
-                <button id="team1-win" class="win-btn">✅ Ponto para Equipe 1</button>
+            <div id="sidebar-scoreboard">
+                <div class="score-box" style="color: var(--team1-color);">
+                    <span class="score-label">Vermelha</span>
+                    <span id="score1">0</span>
+                </div>
+                <span style="color: #7f8c8d; font-weight: 100; font-size:1.2rem;">VS</span>
+                <div class="score-box" style="color: var(--team2-color);">
+                    <span class="score-label">Azul</span>
+                    <span id="score2">0</span>
+                </div>
             </div>
 
-            <div class="team-group">
-                <button id="team2-btn">🔵 Equipe 2: Jogar</button>
-                <button id="team2-win" class="win-btn">✅ Ponto para Equipe 2</button>
+            <div id="group-team1" class="control-group" style="border-left: 4px solid var(--team1-color);">
+                <div class="team-header-row">
+                    <span class="team-name" style="color: var(--team1-color);">Equipe Vermelha</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id="timer-team1" class="timer-display">00:00</span>
+                        <span id="badge-team1" class="status-badge jogando" style="color: var(--team1-color);">JOGANDO</span>
+                    </div>
+                </div>
+                <div class="team-row">
+                    <button id="team1-btn" class="btn-vez">🔴 REVELAR<br>PRÓXIMA</button>
+                    <button id="team1-win" class="btn-ponto">✅<br>PONTO</button>
+                </div>
             </div>
-            
-            <button id="reveal-all-btn">👁️ Revelar para Conferir</button>
-            <button id="new-game-btn">🔄 Próxima Rodada</button>
+
+            <div id="group-team2" class="control-group" style="border-left: 4px solid var(--team2-color);">
+                <div class="team-header-row">
+                    <span class="team-name" style="color: var(--team2-color);">Equipe Azul</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id="timer-team2" class="timer-display">00:00</span>
+                        <span id="badge-team2" class="status-badge jogando" style="color: var(--team2-color);">JOGANDO</span>
+                    </div>
+                </div>
+                <div class="team-row">
+                    <button id="team2-btn" class="btn-vez">🔵 REVELAR<br>PRÓXIMA</button>
+                    <button id="team2-win" class="btn-ponto">✅<br>PONTO</button>
+                </div>
+            </div>
+
+            <div id="actions-container">
+                <button id="reveal-all-btn">👁️‍🗨️ REVELAR IMAGEM COMPLETA</button>
+                <button id="new-game-btn">🔄 PRÓXIMA RODADA</button>
+            </div>
         </div>
-
     </div>
 
     <script>
-        // ==================================================================
-        // CONFIGURAÇÃO DA API
-        const UNSPLASH_ACCESS_KEY = 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg'; 
-        const COLLECTION_IDS = 'ocVKfLLqYe0';
-        const API_URL = `https://api.unsplash.com/photos/random?client_id=${UNSPLASH_ACCESS_KEY}&collections=${COLLECTION_IDS}`;
-        // ==================================================================
+        // --- CHAVES DE API ---
+        const KEYS = {
+            unsplash: 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg',
+            pexels: 'pwJ8LGoNGiFgHKmG73yUykCIXuVBGmM12oO6bH857NmgsLaL5kzj2pG0'
+        };
+        const COLLECTIONS = {
+            unsplash: 'ocVKfLLqYe0',
+            pexels: 'iczmqkr' 
+        };
 
-        // --- Variáveis de Estado ---
-        let currentImageName = "";
-        let isGameLoading = false; // Usando nome mais claro que isGameLocked
+        // --- SISTEMA DE ÁUDIO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let isMuted = false;
+        document.body.addEventListener('click', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, {once:true});
+        function playTone(freq, type, duration, startTime = 0, vol = 0.1) {
+            if (isMuted) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime + startTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + startTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + startTime);
+            osc.stop(audioCtx.currentTime + startTime + duration);
+        }
+        const SoundFX = {
+            pop: () => playTone(600, 'sine', 0.1),
+            point: () => { playTone(500, 'sine', 0.3, 0); playTone(800, 'sine', 0.4, 0.15); },
+            win: () => { [400, 500, 600, 800].forEach((freq, i) => playTone(freq, 'square', 0.2, i * 0.1)); playTone(800, 'square', 1.0, 0.4); },
+            start: () => playTone(300, 'triangle', 0.5),
+            beep: () => playTone(1200, 'square', 0.1, 0, 0.05),
+            timeout: () => playTone(150, 'sawtooth', 1.0, 0, 0.2)
+        };
+        document.getElementById('sound-toggle').onclick = function() { isMuted = !isMuted; this.innerHTML = isMuted ? '🔇' : '🔊'; this.classList.toggle('muted'); }
+        function fireConfetti() { var duration = 3000, end = Date.now() + duration; (function frame() { confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } }); confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } }); if (Date.now() < end) requestAnimationFrame(frame); }()); }
+
+        // --- CONFIGURAÇÃO INICIAL ---
+        const selectPoints = document.getElementById('max-points');
+        for(let i=1; i<=15; i++) { let opt = document.createElement('option'); opt.value = i; opt.innerHTML = i + (i===1 ? ' Ponto' : ' Pontos'); if(i===7) opt.selected = true; selectPoints.appendChild(opt); }
+
+        let usedHistory = JSON.parse(localStorage.getItem('srick_history')) || [];
+        let score1 = 0, score2 = 0;
         let revealedCount = 0;
-        const TOTAL_PANELS = 12;
-        let currentTurn = 'team1'; 
-        // NOVO ESTADO: Indica se a rodada já foi finalizada (ponto dado ou pulada)
-        let isRoundFinished = false; 
-        
-        let scoreTeam1 = 0;
-        let scoreTeam2 = 0;
+        let currentTurn = 'any'; 
+        let lastRoundStarter = null; 
+        let isGameLoading = false;
+        let gameFinished = false; 
+        let roundInteractionStarted = false;
+        let timerInterval = null, timeLeft = 0, isTimeout = false;
+        let pexelsTotalPhotos = 0;
 
-        // --- Elementos do DOM ---
-        const secretImageElement = document.getElementById('secret-image');
-        const coverGrid = document.getElementById('cover-grid');
-        const newGameBtn = document.getElementById('new-game-btn');
-        const loadingMessage = document.getElementById('loading-message');
-        const answerDisplay = document.getElementById('answer-display');
-        
-        const team1Btn = document.getElementById('team1-btn');
-        const team2Btn = document.getElementById('team2-btn');
-        const revealAllBtn = document.getElementById('reveal-all-btn');
-        const score1Display = document.getElementById('score1');
-        const score2Display = document.getElementById('score2');
-        const team1WinBtn = document.getElementById('team1-win');
-        const team2WinBtn = document.getElementById('team2-win');
+        function formatTime(s) { if(s >= 9999) return "∞"; const m = Math.floor(s / 60); const sec = s % 60; return `${m < 10 ? '0'+m : m}:${sec < 10 ? '0'+sec : sec}`; }
+        function stopTimer() { if(timerInterval) clearInterval(timerInterval); document.querySelectorAll('.timer-display').forEach(el => { el.classList.remove('visible', 'warning'); el.innerText = ""; }); }
+        function startTurnTimer(team) {
+            stopTimer(); isTimeout = false;
+            const timeSetting = parseInt(document.getElementById('turn-timer').value);
+            if(timeSetting >= 9999) return;
+            timeLeft = timeSetting;
+            const timerEl = document.getElementById(team === 'team1' ? 'timer-team1' : 'timer-team2');
+            timerEl.innerText = formatTime(timeLeft); timerEl.classList.add('visible');
+            timerInterval = setInterval(() => {
+                timeLeft--; timerEl.innerText = formatTime(timeLeft);
+                if(timeLeft <= 10 && timeLeft > 0) { timerEl.classList.add('warning'); SoundFX.beep(); }
+                if(timeLeft <= 0) { handleTimeout(team); }
+            }, 1000);
+        }
+        function handleTimeout(team) { clearInterval(timerInterval); isTimeout = true; SoundFX.timeout(); const badge = document.getElementById(team === 'team1' ? 'badge-team1' : 'badge-team2'); badge.innerText = "TEMPO ESGOTADO"; badge.classList.remove('jogando'); badge.classList.add('timeout'); badge.style.display = 'inline-block'; }
 
-        // --- Funções Auxiliares ---
-        function createGrid() {
-            coverGrid.innerHTML = ''; 
-            for (let i = 1; i <= TOTAL_PANELS; i++) {
-                const panel = document.createElement('div');
-                panel.classList.add('cover-panel');
-                panel.innerText = i;
-                coverGrid.appendChild(panel);
+        function updateUI() { document.getElementById('history-count').innerText = `Imagens únicas vistas: ${usedHistory.length}`; document.getElementById('score1').innerText = score1; document.getElementById('score2').innerText = score2; }
+
+        async function fetchImage() {
+            const source = document.getElementById('image-source').value;
+
+            for (let i = 0; i < 10; i++) {
+                try {
+                    let id = null; let url = ''; let desc = '';
+
+                    if (source === 'unsplash') {
+                        const r = await fetch(`https://api.unsplash.com/photos/random?client_id=${KEYS.unsplash}&collections=${COLLECTIONS.unsplash}&t=${Date.now()}`);
+                        if (!r.ok) throw new Error('Unsplash API Error');
+                        const d = await r.json();
+                        id = d.id; url = d.urls.regular; desc = d.alt_description || d.description || "Imagem Misteriosa";
+                    } else {
+                        let pageToFetch = 1;
+                        if (pexelsTotalPhotos === 0) { pageToFetch = 1; } else { pageToFetch = Math.floor(Math.random() * pexelsTotalPhotos) + 1; }
+                        const r = await fetch(`https://api.pexels.com/v1/collections/${COLLECTIONS.pexels}?per_page=1&page=${pageToFetch}`, { headers: { Authorization: KEYS.pexels } });
+                        if (!r.ok) throw new Error('Pexels API Error');
+                        const d = await r.json();
+                        if (d.total_results) pexelsTotalPhotos = d.total_results;
+                        if (d.media && d.media.length > 0) {
+                            const photo = d.media[0];
+                            if (photo.type === 'Video') throw new Error('Video ignored');
+                            id = photo.id.toString(); url = photo.src.large2x; desc = photo.alt || "Imagem Misteriosa";
+                        } else {
+                            if(pageToFetch !== 1) { pexelsTotalPhotos = 0; continue; }
+                            throw new Error('Pexels no photos');
+                        }
+                    }
+
+                    if (id && url && !usedHistory.includes(id)) {
+                        usedHistory.push(id);
+                        localStorage.setItem('srick_history', JSON.stringify(usedHistory));
+                        return { id, url, description: desc };
+                    }
+                } catch (e) { console.warn(`Erro buscando imagem`, e); }
             }
+            usedHistory = []; localStorage.removeItem('srick_history'); return fetchImage();
         }
-
-        function showAnswer(message) {
-            answerDisplay.innerText = message;
-            answerDisplay.style.display = 'block'; 
-        }
-
-        function updateScoreDisplay() {
-            score1Display.innerText = scoreTeam1;
-            score2Display.innerText = scoreTeam2;
-        }
-
-        // FUNÇÃO CENTRAL DE CONTROLE DOS BOTÕES (Lógica principal da V19)
-        function updateButtonsState() {
-            // 1. Se o jogo está carregando, trava TUDO.
-            if (isGameLoading) {
-                team1Btn.disabled = true; team2Btn.disabled = true;
-                team1WinBtn.disabled = true; team2WinBtn.disabled = true;
-                revealAllBtn.disabled = true; newGameBtn.disabled = true;
-                return;
-            }
-
-            // 2. Se a rodada foi FINALIZADA (ponto dado ou pulada manualmente)
-            if (isRoundFinished) {
-                // Trava tudo, exceto "Próxima Rodada"
-                team1Btn.disabled = true; team2Btn.disabled = true;
-                team1WinBtn.disabled = true; team2WinBtn.disabled = true;
-                revealAllBtn.disabled = true;
-                newGameBtn.disabled = false;
-                return;
-            }
-
-            // 3. Jogo em andamento (imagem pode estar parcial ou totalmente revelada)
-            
-            // O botão de Próxima Rodada está sempre ativo se não estiver carregando
-            newGameBtn.disabled = false;
-
-            // Os botões de PONTO e REVELAR estão sempre ativos enquanto a rodada não finaliza
-            team1WinBtn.disabled = false;
-            team2WinBtn.disabled = false;
-            // O botão de revelar só desabilita se já estiver tudo revelado
-            revealAllBtn.disabled = (revealedCount === TOTAL_PANELS);
-
-
-            // Gerenciamento dos botões de TURNO (jogar dado)
-            // Eles só funcionam se a imagem NÃO estiver totalmente revelada
-            if (revealedCount === TOTAL_PANELS) {
-                team1Btn.disabled = true;
-                team2Btn.disabled = true;
-            } else {
-                if (currentTurn === 'team1') {
-                    team1Btn.disabled = false; team2Btn.disabled = true;
-                    team1Btn.innerText = "🔴 Equipe 1: SUA VEZ ▶️"; team2Btn.innerText = "🔵 Equipe 2: Aguarde...";
-                } else {
-                    team1Btn.disabled = true; team2Btn.disabled = false;
-                    team1Btn.innerText = "🔴 Equipe 1: Aguarde..."; team2Btn.innerText = "🔵 Equipe 2: SUA VEZ ▶️";
-                }
-            }
-        }
-
-        // --- FUNÇÕES DOS BOTÕES ---
-        
-        function revealRandomPanel() {
-            if (isGameLoading || isRoundFinished || revealedCount === TOTAL_PANELS) return;
-            
-            const hiddenPanels = document.querySelectorAll('.cover-panel:not(.revealed)');
-            if (hiddenPanels.length > 0) {
-                const randomIndex = Math.floor(Math.random() * hiddenPanels.length);
-                hiddenPanels[randomIndex].classList.add('revealed');
-                revealedCount++;
-
-                if (revealedCount === TOTAL_PANELS) {
-                     // Chegou ao final passo a passo. Mostra msg para conferir.
-                     showAnswer(`Imagem totalmente revelada! Se alguém acertou, marquem o ponto.`);
-                } else {
-                    currentTurn = (currentTurn === 'team1' ? 'team2' : 'team1');
-                }
-                updateButtonsState();
-            }
-        }
-
-        // Função de Vitória (Dá o ponto e finaliza a rodada)
-        function handleTeamWin(winningTeam) {
-            if (isGameLoading || isRoundFinished) return;
-
-            if (winningTeam === 'team1') {
-                scoreTeam1++;
-                showAnswer(`🎉 PONTO PARA EQUIPE 1! A imagem era: "${currentImageName}"`);
-            } else {
-                scoreTeam2++;
-                showAnswer(`🎉 PONTO PARA EQUIPE 2! A imagem era: "${currentImageName}"`);
-            }
-            updateScoreDisplay();
-            
-            // Revela tudo se ainda não estava
-            document.querySelectorAll('.cover-panel').forEach(p => p.classList.add('revealed'));
-            revealedCount = TOTAL_PANELS;
-            
-            // MARCA A RODADA COMO FINALIZADA
-            isRoundFinished = true;
-            updateButtonsState();
-        }
-
-
-        // Função "Revelar para Conferir" (NÃO finaliza a rodada)
-        function revealAllPanelsForChecking() {
-             if (isGameLoading || isRoundFinished || revealedCount === TOTAL_PANELS) return;
-             
-             document.querySelectorAll('.cover-panel').forEach(p => p.classList.add('revealed'));
-             revealedCount = TOTAL_PANELS;
-             
-             // Mensagem clara de que agora é hora de conferir
-             showAnswer(`Imagem revelada para conferência! Se o palpite estava certo, marquem o ponto da equipe abaixo. Descrição: "${currentImageName}"`);
-             
-             // Atualiza estados (vai travar os botões de turno, mas manter os de ponto ativos)
-             updateButtonsState();
-        }
-
-
-        // --- FUNÇÃO: BUSCAR IMAGEM NA API ---
-        async function fetchNewImageFromAPI() {
-            try {
-                loadingMessage.innerText = "Buscando imagem na coleção...";
-                const response = await fetch(API_URL);
-                if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
-                const data = await response.json();
-                
-                let finalName = data.alt_description || data.description;
-                if (!finalName && data.tags && data.tags.length > 0) {
-                     finalName = data.tags[0].title;
-                } else if (!finalName) {
-                     finalName = "Imagem sem descrição";
-                }
-                
-                return { name: finalName, src: data.urls.regular };
-            } catch (error) {
-                console.error("Falha ao buscar imagem:", error);
-                loadingMessage.innerText = `Erro: ${error.message}`;
-                alert(`Ops! Erro na API.\n\n${error.message}`);
-                return null;
-            }
-        }
-
-
-        // --- Lógica Principal do Jogo ---
 
         async function startNewGame() {
-            if (isGameLoading) return; 
-            isGameLoading = true;
-            updateButtonsState(); // Trava tudo
+            if (isGameLoading) return;
+            if (gameFinished) { resetMatch(); return; }
 
-            newGameBtn.innerText = "Carregando...";
+            stopTimer(); SoundFX.start(); isGameLoading = true;
+            document.getElementById('loading-message').style.display = 'flex';
+            document.getElementById('answer-display').style.display = 'none';
+            document.querySelectorAll('.status-badge').forEach(b => { b.className = 'status-badge jogando'; b.style.display = 'none'; b.innerText = "JOGANDO"; });
+            
+            const img = document.getElementById('secret-image'); img.classList.remove('loaded');
+            const grid = document.getElementById('cover-grid'); grid.innerHTML = '';
+            for(let i=1; i<=12; i++) { const p = document.createElement('div'); p.className = 'cover-panel'; p.innerText = i; grid.appendChild(p); }
 
-            secretImageElement.classList.remove('loaded');
-            secretImageElement.style.transition = 'none';
-            secretImageElement.style.opacity = '0';
-            revealedCount = 0; 
-            // Reseta o estado de finalização da rodada
-            isRoundFinished = false;
-             
-            answerDisplay.style.display = 'none';
-            answerDisplay.innerText = '';
-            document.querySelectorAll('.cover-panel').forEach(p => p.classList.remove('revealed'));
+            roundInteractionStarted = false;
+            if (lastRoundStarter === null) currentTurn = 'any';
+            else { currentTurn = lastRoundStarter === 'team1' ? 'team2' : 'team1'; lastRoundStarter = currentTurn; }
 
-            const imageData = await fetchNewImageFromAPI();
+            const data = await fetchImage();
+            if(!data) { isGameLoading = false; return; }
 
-            if (!imageData) {
-                 isGameLoading = false;
-                 updateButtonsState(); // Destrava para tentar de novo
-                 newGameBtn.innerText = "Tentar Novamente";
-                 return;
-            }
-
-            currentImageName = imageData.name;
-            loadingMessage.innerText = "Carregando imagem...";
-
-            secretImageElement.src = imageData.src;
-
-            secretImageElement.onload = function() {
-                secretImageElement.style.transition = '';
-                secretImageElement.style.opacity = '';
-                secretImageElement.classList.add('loaded');
-                
-                isGameLoading = false;
-                newGameBtn.innerText = "🔄 Próxima Rodada";
-                
-                // Inicia a rodada e libera os botões corretos
-                updateButtonsState();
+            window.currentName = data.description;
+            img.src = data.url;
+            
+            img.onload = () => {
+                const container = document.getElementById('game-container');
+                const maxAllowedWidth = Math.min(800, window.innerWidth * 0.95);
+                const maxAllowedHeight = window.innerHeight * 0.70; // Reduzi um pouco a altura maxima
+                const ratio = Math.min(maxAllowedWidth / img.naturalWidth, maxAllowedHeight / img.naturalHeight);
+                container.style.width = `${img.naturalWidth * ratio}px`;
+                container.style.height = `${img.naturalHeight * ratio}px`;
+                img.classList.add('loaded'); document.getElementById('loading-message').style.display = 'none';
+                isGameLoading = false; revealedCount = 0;
+                updateTurnUI(); updateUI();
             };
-             
-             secretImageElement.onerror = function() {
-                 loadingMessage.innerText = "Erro ao exibir a imagem. Tente outra.";
-                 isGameLoading = false;
-                 updateButtonsState();
-                 newGameBtn.innerText = "Tentar Outra";
-             }
         }
-        
-        // --- Event Listeners ---
-        newGameBtn.addEventListener('click', startNewGame);
-        
-        team1Btn.addEventListener('click', revealRandomPanel);
-        team2Btn.addEventListener('click', revealRandomPanel);
-        
-        team1WinBtn.addEventListener('click', () => handleTeamWin('team1'));
-        team2WinBtn.addEventListener('click', () => handleTeamWin('team2'));
 
-        // Agora chama a função de conferência
-        revealAllBtn.addEventListener('click', revealAllPanelsForChecking);
+        function resetMatch() {
+            score1 = 0; score2 = 0; gameFinished = false; lastRoundStarter = null; roundInteractionStarted = false;
+            stopTimer();
+            document.getElementById('max-points').disabled = false;
+            document.getElementById('turn-timer').disabled = false;
+            document.getElementById('image-source').disabled = false;
+            document.getElementById('new-game-btn').innerText = "🔄 PRÓXIMA RODADA";
+            document.getElementById('new-game-btn').style.background = "var(--accent-color)";
+            updateUI(); startNewGame();
+        }
 
-        // --- Inicialização ---
-        createGrid();
-        updateScoreDisplay(); 
+        function updateTurnUI() {
+            const t1Btn = document.getElementById('team1-btn'); const t2Btn = document.getElementById('team2-btn');
+            const group1 = document.getElementById('group-team1'); const group2 = document.getElementById('group-team2');
+            const badge1 = document.getElementById('badge-team1'); const badge2 = document.getElementById('badge-team2');
+            const revealAllBtn = document.getElementById('reveal-all-btn');
+            const isRoundOver = revealedCount >= 12;
+
+            t1Btn.disabled = gameFinished || (currentTurn !== 'any' && currentTurn !== 'team1') || isRoundOver;
+            t2Btn.disabled = gameFinished || (currentTurn !== 'any' && currentTurn !== 'team2') || isRoundOver;
+            document.getElementById('team1-win').disabled = isGameLoading || gameFinished;
+            document.getElementById('team2-win').disabled = isGameLoading || gameFinished;
+            revealAllBtn.disabled = isRoundOver || gameFinished;
+
+            group1.classList.remove('active-status'); group2.classList.remove('active-status');
+            if(!isTimeout) { badge1.style.display = 'none'; badge2.style.display = 'none'; badge1.className = 'status-badge jogando'; badge1.innerText = "JOGANDO"; badge2.className = 'status-badge jogando'; badge2.innerText = "JOGANDO"; }
+
+            if (gameFinished) { t1Btn.innerHTML = "FIM DE JOGO"; t2Btn.innerHTML = "FIM DE JOGO"; stopTimer(); return; }
+            if (isRoundOver) { t1Btn.innerHTML = "RODADA<br>FINALIZADA"; t2Btn.innerHTML = "RODADA<br>FINALIZADA"; stopTimer(); return; }
+
+            if (currentTurn === 'any') {
+                t1Btn.innerHTML = "QUEM COMEÇA?<br>CLIQUE AQUI"; t2Btn.innerHTML = "QUEM COMEÇA?<br>CLIQUE AQUI";
+            } else if (currentTurn === 'team1') {
+                t1Btn.innerHTML = "👁️ REVELAR<br>PRÓXIMA"; t2Btn.innerHTML = "⏳ AGUARDE";
+                if (roundInteractionStarted) { group2.classList.add('active-status'); if(!isTimeout && !document.getElementById('timer-team2').innerText) startTurnTimer('team2'); if(!isTimeout) badge2.style.display = 'inline-block'; }
+            } else {
+                t2Btn.innerHTML = "👁️ REVELAR<br>PRÓXIMA"; t1Btn.innerHTML = "⏳ AGUARDE";
+                if (roundInteractionStarted) { group1.classList.add('active-status'); if(!isTimeout && !document.getElementById('timer-team1').innerText) startTurnTimer('team1'); if(!isTimeout) badge1.style.display = 'inline-block'; }
+            }
+        }
+
+        function reveal(teamClicked) {
+            document.getElementById('max-points').disabled = true; document.getElementById('turn-timer').disabled = true; document.getElementById('image-source').disabled = true;
+            roundInteractionStarted = true; SoundFX.pop(); 
+            isTimeout = false; document.querySelectorAll('.status-badge').forEach(b => { b.classList.remove('timeout'); b.classList.add('jogando'); b.innerText = "JOGANDO"; });
+
+            if (currentTurn === 'any') { currentTurn = teamClicked === 'team1' ? 'team2' : 'team1'; lastRoundStarter = teamClicked; } 
+            else { currentTurn = currentTurn === 'team1' ? 'team2' : 'team1'; }
+
+            const p = document.querySelectorAll('.cover-panel:not(.revealed)');
+            if (p.length > 0) { p[Math.floor(Math.random()*p.length)].classList.add('revealed'); revealedCount++; stopTimer(); updateTurnUI(); }
+        }
+
+        function revealAll() { stopTimer(); document.querySelectorAll('.cover-panel:not(.revealed)').forEach(p => p.classList.add('revealed')); revealedCount = 12; updateTurnUI(); }
+
+        document.getElementById('team1-btn').onclick = () => reveal('team1');
+        document.getElementById('team2-btn').onclick = () => reveal('team2');
+        document.getElementById('new-game-btn').onclick = startNewGame;
+        document.getElementById('team1-win').onclick = () => { score1++; checkWin('Equipe Vermelha'); };
+        document.getElementById('team2-win').onclick = () => { score2++; checkWin('Equipe Azul'); };
+        document.getElementById('reveal-all-btn').onclick = revealAll;
+        document.getElementById('reset-history-btn').onclick = () => { if(confirm("Limpar histórico de imagens?")) { usedHistory = []; localStorage.removeItem('srick_history'); updateUI(); } };
+
+        function checkWin(teamName) {
+            stopTimer(); SoundFX.point();
+            const maxPoints = parseInt(document.getElementById('max-points').value);
+            if (score1 >= maxPoints || score2 >= maxPoints) {
+                gameFinished = true; setTimeout(SoundFX.win, 500); fireConfetti();
+                const d = document.getElementById('answer-display'); d.innerHTML = `🏆 VITORIA DA ${teamName.toUpperCase()}! 🏆<br><span style="font-size:1rem; color:white;">RESPOSTA: ${window.currentName}</span>`; d.style.display = 'block';
+                const btn = document.getElementById('new-game-btn'); btn.innerText = "🏆 NOVO JOGO (CLIQUE PARA CONFIGURAR)"; btn.style.background = "#27ae60"; 
+                document.getElementById('max-points').disabled = false; document.getElementById('turn-timer').disabled = false; document.getElementById('image-source').disabled = false;
+                revealAll(); 
+            } else { finishRound(); }
+            updateUI(); updateTurnUI();
+        }
+
+        function finishRound() { stopTimer(); const d = document.getElementById('answer-display'); d.innerText = `RESPOSTA: ${window.currentName}`; d.style.display = 'block'; revealAll(); }
+
         startNewGame();
-
     </script>
 </body>
 </html>
