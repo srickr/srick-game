@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Srick Game - V35 (Compact Layout)</title>
+    <title>Srick Game - V39 (Tela Inicial)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -24,18 +24,17 @@
             background-color: var(--primary-bg);
             color: #ecf0f1;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; margin: 0; padding: 10px; /* Reduzi padding */
+            min-height: 100vh; margin: 0; padding: 10px;
             box-sizing: border-box; overflow-x: hidden; 
         }
 
-        /* Reduzi tamanho e margem do título para ganhar espaço */
         h1 { margin: 0 0 5px 0; font-size: 2rem; letter-spacing: 2px; text-transform: uppercase; color: var(--accent-color); text-shadow: 2px 2px 4px rgba(0,0,0,0.5); text-align: center; }
         
         #header-container {
             display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 15px; width: 100%;
         }
 
-        /* --- CONFIGURAÇÕES (Agora inclui o botão de histórico) --- */
+        /* --- CONFIGURAÇÕES --- */
         #settings-bar {
             display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.05); padding: 5px 15px; border-radius: 10px; flex-wrap: wrap; justify-content: center;
         }
@@ -64,27 +63,52 @@
         
         #game-container-wrapper { 
             flex: 3; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; 
-            /* Importante para não empurrar muito pra baixo */
             min-height: auto; 
         }
         
-        #game-container { position: relative; background: #2c3e50; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: flex; transition: width 0.3s, height 0.3s; }
-        #secret-image { width: 100%; height: 100%; object-fit: fill; display: block; opacity: 0; transition: opacity 0.5s; }
+        #game-container { 
+            position: relative; background: #2c3e50; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: flex; transition: width 0.3s, height 0.3s; 
+            /* Tamanho inicial do container antes de carregar imagem */
+            width: 800px; height: 500px; max-width: 95vw; max-height: 70vh;
+            align-items: center; justify-content: center;
+        }
+        
+        #secret-image { width: 100%; height: 100%; object-fit: fill; display: block; opacity: 0; transition: opacity 0.5s; position: absolute; top:0; left:0; }
         #secret-image.loaded { opacity: 1; }
-        #cover-grid { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); z-index: 2; pointer-events: none; }
-        .cover-panel { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 0 15px rgba(0,0,0,0.2); display: flex; justify-content: center; align-items: center; font-size: clamp(1.5rem, 5cqw, 3.5rem); font-weight: 900; color: rgba(44, 62, 80, 0.8); transition: transform 0.5s, opacity 0.5s; }
-        #game-container { container-type: inline-size; }
+        
+        #cover-grid { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: grid; 
+            z-index: 2; pointer-events: none; 
+        }
+        
+        .cover-panel { 
+            background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2); 
+            display: flex; justify-content: center; align-items: center; 
+            font-weight: 900; color: rgba(44, 62, 80, 0.8); 
+            transition: transform 0.5s, opacity 0.5s; 
+            cursor: pointer;
+        }
         .cover-panel.revealed { opacity: 0; transform: scale(1.2); }
 
-        /* --- BARRA LATERAL (Agora com Placar) --- */
+        /* --- TELA DE BOAS VINDAS --- */
+        #welcome-screen {
+            position: absolute; width: 100%; height: 100%; z-index: 20;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(44, 62, 80, 0.95); color: white; text-align: center; padding: 20px;
+        }
+        #welcome-screen h2 { font-size: 2.5rem; margin-bottom: 10px; color: var(--accent-color); }
+        #welcome-screen p { font-size: 1.2rem; max-width: 600px; line-height: 1.5; color: #bdc3c7; }
+        #welcome-screen.hidden { display: none; }
+
+        /* --- BARRA LATERAL --- */
         .controls-sidebar { 
             flex: 1; min-width: 280px; background: var(--sidebar-bg); padding: 20px; border-radius: 20px; 
             display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(5px); 
-            /* Ajuste para caber na tela sem scroll se possível */
             max-height: 90vh; overflow-y: auto; 
         }
 
-        /* --- NOVO PLACAR NA SIDEBAR --- */
         #sidebar-scoreboard {
             display: flex; justify-content: space-around; align-items: center;
             background: rgba(0,0,0,0.4); padding: 15px; border-radius: 15px;
@@ -160,6 +184,16 @@
             </div>
 
             <div class="setting-item">
+                <label>Nível:</label>
+                <select id="difficulty-level">
+                    <option value="easy" selected>Padrão (12)</option>
+                    <option value="medium">Médio (18)</option>
+                    <option value="hard">Difícil (24)</option>
+                    <option value="expert">Expert (48)</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
                 <label>Fonte:</label>
                 <select id="image-source">
                     <option value="unsplash">Unsplash</option>
@@ -177,14 +211,20 @@
         <div id="game-container-wrapper">
             <div id="answer-display"></div>
             <div id="game-container">
-                <div id="loading-message" style="position:absolute; z-index:10; font-size: 1.5rem; font-weight: bold; color: white; text-shadow: 1px 1px 3px black;">Carregando...</div>
+                
+                <div id="welcome-screen">
+                    <h2>Bem-vindo!</h2>
+                    <p>Configure o jogo no menu acima e clique no botão amarelo para iniciar.</p>
+                    <p style="font-size: 3rem; margin-top: 20px;">🎮</p>
+                </div>
+
+                <div id="loading-message" style="position:absolute; z-index:10; font-size: 1.5rem; font-weight: bold; color: white; text-shadow: 1px 1px 3px black; display: none;">Carregando...</div>
                 <img id="secret-image" src="">
                 <div id="cover-grid"></div>
             </div>
         </div>
 
         <div class="controls-sidebar">
-            
             <div id="sidebar-scoreboard">
                 <div class="score-box" style="color: var(--team1-color);">
                     <span class="score-label">Vermelha</span>
@@ -206,8 +246,8 @@
                     </div>
                 </div>
                 <div class="team-row">
-                    <button id="team1-btn" class="btn-vez">🔴 REVELAR<br>PRÓXIMA</button>
-                    <button id="team1-win" class="btn-ponto">✅<br>PONTO</button>
+                    <button id="team1-btn" class="btn-vez" disabled>🔴 REVELAR<br>PRÓXIMA</button>
+                    <button id="team1-win" class="btn-ponto" disabled>✅<br>PONTO</button>
                 </div>
             </div>
 
@@ -220,45 +260,40 @@
                     </div>
                 </div>
                 <div class="team-row">
-                    <button id="team2-btn" class="btn-vez">🔵 REVELAR<br>PRÓXIMA</button>
-                    <button id="team2-win" class="btn-ponto">✅<br>PONTO</button>
+                    <button id="team2-btn" class="btn-vez" disabled>🔵 REVELAR<br>PRÓXIMA</button>
+                    <button id="team2-win" class="btn-ponto" disabled>✅<br>PONTO</button>
                 </div>
             </div>
 
             <div id="actions-container">
-                <button id="reveal-all-btn">👁️‍🗨️ REVELAR IMAGEM COMPLETA</button>
-                <button id="new-game-btn">🔄 PRÓXIMA RODADA</button>
+                <button id="reveal-all-btn" disabled>👁️‍🗨️ REVELAR IMAGEM COMPLETA</button>
+                <button id="new-game-btn">▶ INICIAR JOGO</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CHAVES DE API ---
-        const KEYS = {
-            unsplash: 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg',
-            pexels: 'pwJ8LGoNGiFgHKmG73yUykCIXuVBGmM12oO6bH857NmgsLaL5kzj2pG0'
-        };
-        const COLLECTIONS = {
-            unsplash: 'ocVKfLLqYe0',
-            pexels: 'iczmqkr' 
+        const KEYS = { unsplash: 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg', pexels: 'pwJ8LGoNGiFgHKmG73yUykCIXuVBGmM12oO6bH857NmgsLaL5kzj2pG0' };
+        const COLLECTIONS = { unsplash: 'ocVKfLLqYe0', pexels: 'iczmqkr' };
+
+        const LEVELS = {
+            easy:   { rows: 3, cols: 4, total: 12, fontSize: 'clamp(1.5rem, 5cqw, 3.5rem)' }, 
+            medium: { rows: 3, cols: 6, total: 18, fontSize: 'clamp(1.3rem, 4.5cqw, 3rem)' }, 
+            hard:   { rows: 4, cols: 6, total: 24, fontSize: 'clamp(1.2rem, 4cqw, 2.5rem)' }, 
+            expert: { rows: 6, cols: 8, total: 48, fontSize: 'clamp(1rem, 2.5cqw, 2rem)' }
         };
 
-        // --- SISTEMA DE ÁUDIO ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let isMuted = false;
         document.body.addEventListener('click', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, {once:true});
         function playTone(freq, type, duration, startTime = 0, vol = 0.1) {
             if (isMuted) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
             gain.gain.setValueAtTime(vol, audioCtx.currentTime + startTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + startTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(audioCtx.currentTime + startTime);
-            osc.stop(audioCtx.currentTime + startTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + startTime); osc.stop(audioCtx.currentTime + startTime + duration);
         }
         const SoundFX = {
             pop: () => playTone(600, 'sine', 0.1),
@@ -271,13 +306,13 @@
         document.getElementById('sound-toggle').onclick = function() { isMuted = !isMuted; this.innerHTML = isMuted ? '🔇' : '🔊'; this.classList.toggle('muted'); }
         function fireConfetti() { var duration = 3000, end = Date.now() + duration; (function frame() { confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } }); confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } }); if (Date.now() < end) requestAnimationFrame(frame); }()); }
 
-        // --- CONFIGURAÇÃO INICIAL ---
         const selectPoints = document.getElementById('max-points');
         for(let i=1; i<=15; i++) { let opt = document.createElement('option'); opt.value = i; opt.innerHTML = i + (i===1 ? ' Ponto' : ' Pontos'); if(i===7) opt.selected = true; selectPoints.appendChild(opt); }
 
         let usedHistory = JSON.parse(localStorage.getItem('srick_history')) || [];
         let score1 = 0, score2 = 0;
         let revealedCount = 0;
+        let currentTotalPanels = 12; 
         let currentTurn = 'any'; 
         let lastRoundStarter = null; 
         let isGameLoading = false;
@@ -285,6 +320,7 @@
         let roundInteractionStarted = false;
         let timerInterval = null, timeLeft = 0, isTimeout = false;
         let pexelsTotalPhotos = 0;
+        let gameStarted = false; // Flag para controlar se o jogo começou
 
         function formatTime(s) { if(s >= 9999) return "∞"; const m = Math.floor(s / 60); const sec = s % 60; return `${m < 10 ? '0'+m : m}:${sec < 10 ? '0'+sec : sec}`; }
         function stopTimer() { if(timerInterval) clearInterval(timerInterval); document.querySelectorAll('.timer-display').forEach(el => { el.classList.remove('visible', 'warning'); el.innerText = ""; }); }
@@ -307,11 +343,9 @@
 
         async function fetchImage() {
             const source = document.getElementById('image-source').value;
-
             for (let i = 0; i < 10; i++) {
                 try {
                     let id = null; let url = ''; let desc = '';
-
                     if (source === 'unsplash') {
                         const r = await fetch(`https://api.unsplash.com/photos/random?client_id=${KEYS.unsplash}&collections=${COLLECTIONS.unsplash}&t=${Date.now()}`);
                         if (!r.ok) throw new Error('Unsplash API Error');
@@ -333,15 +367,25 @@
                             throw new Error('Pexels no photos');
                         }
                     }
-
                     if (id && url && !usedHistory.includes(id)) {
-                        usedHistory.push(id);
-                        localStorage.setItem('srick_history', JSON.stringify(usedHistory));
-                        return { id, url, description: desc };
+                        usedHistory.push(id); localStorage.setItem('srick_history', JSON.stringify(usedHistory)); return { id, url, description: desc };
                     }
                 } catch (e) { console.warn(`Erro buscando imagem`, e); }
             }
             usedHistory = []; localStorage.removeItem('srick_history'); return fetchImage();
+        }
+
+        // --- FUNÇÃO PARA INICIAR JOGO ---
+        function startGameFlow() {
+            if (!gameStarted) {
+                gameStarted = true;
+                document.getElementById('welcome-screen').classList.add('hidden');
+                document.getElementById('new-game-btn').innerText = "🔄 PRÓXIMA RODADA";
+                document.getElementById('new-game-btn').style.background = "var(--accent-color)";
+                startNewGame();
+            } else {
+                startNewGame();
+            }
         }
 
         async function startNewGame() {
@@ -354,8 +398,24 @@
             document.querySelectorAll('.status-badge').forEach(b => { b.className = 'status-badge jogando'; b.style.display = 'none'; b.innerText = "JOGANDO"; });
             
             const img = document.getElementById('secret-image'); img.classList.remove('loaded');
-            const grid = document.getElementById('cover-grid'); grid.innerHTML = '';
-            for(let i=1; i<=12; i++) { const p = document.createElement('div'); p.className = 'cover-panel'; p.innerText = i; grid.appendChild(p); }
+            
+            // --- LÓGICA DE DIFICULDADE (Aplicada dinamicamente) ---
+            const levelKey = document.getElementById('difficulty-level').value;
+            const levelData = LEVELS[levelKey];
+            currentTotalPanels = levelData.total;
+            
+            const grid = document.getElementById('cover-grid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${levelData.cols}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${levelData.rows}, 1fr)`;
+
+            for(let i=1; i<=levelData.total; i++) {
+                const p = document.createElement('div');
+                p.className = 'cover-panel'; 
+                p.innerText = i;
+                p.style.fontSize = levelData.fontSize;
+                grid.appendChild(p);
+            }
 
             roundInteractionStarted = false;
             if (lastRoundStarter === null) currentTurn = 'any';
@@ -370,7 +430,7 @@
             img.onload = () => {
                 const container = document.getElementById('game-container');
                 const maxAllowedWidth = Math.min(800, window.innerWidth * 0.95);
-                const maxAllowedHeight = window.innerHeight * 0.70; // Reduzi um pouco a altura maxima
+                const maxAllowedHeight = window.innerHeight * 0.70;
                 const ratio = Math.min(maxAllowedWidth / img.naturalWidth, maxAllowedHeight / img.naturalHeight);
                 container.style.width = `${img.naturalWidth * ratio}px`;
                 container.style.height = `${img.naturalHeight * ratio}px`;
@@ -386,6 +446,7 @@
             document.getElementById('max-points').disabled = false;
             document.getElementById('turn-timer').disabled = false;
             document.getElementById('image-source').disabled = false;
+            document.getElementById('difficulty-level').disabled = false;
             document.getElementById('new-game-btn').innerText = "🔄 PRÓXIMA RODADA";
             document.getElementById('new-game-btn').style.background = "var(--accent-color)";
             updateUI(); startNewGame();
@@ -396,7 +457,8 @@
             const group1 = document.getElementById('group-team1'); const group2 = document.getElementById('group-team2');
             const badge1 = document.getElementById('badge-team1'); const badge2 = document.getElementById('badge-team2');
             const revealAllBtn = document.getElementById('reveal-all-btn');
-            const isRoundOver = revealedCount >= 12;
+            
+            const isRoundOver = revealedCount >= currentTotalPanels;
 
             t1Btn.disabled = gameFinished || (currentTurn !== 'any' && currentTurn !== 'team1') || isRoundOver;
             t2Btn.disabled = gameFinished || (currentTurn !== 'any' && currentTurn !== 'team2') || isRoundOver;
@@ -422,7 +484,8 @@
         }
 
         function reveal(teamClicked) {
-            document.getElementById('max-points').disabled = true; document.getElementById('turn-timer').disabled = true; document.getElementById('image-source').disabled = true;
+            document.getElementById('max-points').disabled = true; document.getElementById('turn-timer').disabled = true; 
+            document.getElementById('image-source').disabled = true; document.getElementById('difficulty-level').disabled = true;
             roundInteractionStarted = true; SoundFX.pop(); 
             isTimeout = false; document.querySelectorAll('.status-badge').forEach(b => { b.classList.remove('timeout'); b.classList.add('jogando'); b.innerText = "JOGANDO"; });
 
@@ -433,11 +496,12 @@
             if (p.length > 0) { p[Math.floor(Math.random()*p.length)].classList.add('revealed'); revealedCount++; stopTimer(); updateTurnUI(); }
         }
 
-        function revealAll() { stopTimer(); document.querySelectorAll('.cover-panel:not(.revealed)').forEach(p => p.classList.add('revealed')); revealedCount = 12; updateTurnUI(); }
+        function revealAll() { stopTimer(); document.querySelectorAll('.cover-panel:not(.revealed)').forEach(p => p.classList.add('revealed')); revealedCount = currentTotalPanels; updateTurnUI(); }
 
         document.getElementById('team1-btn').onclick = () => reveal('team1');
         document.getElementById('team2-btn').onclick = () => reveal('team2');
-        document.getElementById('new-game-btn').onclick = startNewGame;
+        // Botão principal chama o fluxo de início agora
+        document.getElementById('new-game-btn').onclick = startGameFlow;
         document.getElementById('team1-win').onclick = () => { score1++; checkWin('Equipe Vermelha'); };
         document.getElementById('team2-win').onclick = () => { score2++; checkWin('Equipe Azul'); };
         document.getElementById('reveal-all-btn').onclick = revealAll;
@@ -450,7 +514,7 @@
                 gameFinished = true; setTimeout(SoundFX.win, 500); fireConfetti();
                 const d = document.getElementById('answer-display'); d.innerHTML = `🏆 VITORIA DA ${teamName.toUpperCase()}! 🏆<br><span style="font-size:1rem; color:white;">RESPOSTA: ${window.currentName}</span>`; d.style.display = 'block';
                 const btn = document.getElementById('new-game-btn'); btn.innerText = "🏆 NOVO JOGO (CLIQUE PARA CONFIGURAR)"; btn.style.background = "#27ae60"; 
-                document.getElementById('max-points').disabled = false; document.getElementById('turn-timer').disabled = false; document.getElementById('image-source').disabled = false;
+                document.getElementById('max-points').disabled = false; document.getElementById('turn-timer').disabled = false; document.getElementById('image-source').disabled = false; document.getElementById('difficulty-level').disabled = false;
                 revealAll(); 
             } else { finishRound(); }
             updateUI(); updateTurnUI();
@@ -458,7 +522,8 @@
 
         function finishRound() { stopTimer(); const d = document.getElementById('answer-display'); d.innerText = `RESPOSTA: ${window.currentName}`; d.style.display = 'block'; revealAll(); }
 
-        startNewGame();
+        // Não chamamos startNewGame() automaticamente mais. O jogo começa parado.
+        updateUI(); 
     </script>
 </body>
 </html>
