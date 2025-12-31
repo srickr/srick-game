@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Srick Game - V39 (Tela Inicial)</title>
+    <title>Srick Game - V45 (Modo Aleatório Total)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -196,8 +196,10 @@
             <div class="setting-item">
                 <label>Fonte:</label>
                 <select id="image-source">
+                    <option value="all" selected>Todas (Aleatório)</option>
                     <option value="unsplash">Unsplash</option>
-                    <option value="pexels" selected>Pexels</option>
+                    <option value="pexels">Pexels</option>
+                    <option value="pixabay">Pixabay (Coleção)</option>
                 </select>
             </div>
 
@@ -273,8 +275,20 @@
     </div>
 
     <script>
-        const KEYS = { unsplash: 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg', pexels: 'pwJ8LGoNGiFgHKmG73yUykCIXuVBGmM12oO6bH857NmgsLaL5kzj2pG0' };
+        const KEYS = { 
+            unsplash: 'hWd7-HL-n9RawQtEL6RPdYgzoudLJVikdSVdyMY05hg', 
+            pexels: 'pwJ8LGoNGiFgHKmG73yUykCIXuVBGmM12oO6bH857NmgsLaL5kzj2pG0',
+            pixabay: '53974671-db307185054b1fbdf7acfd7f3' 
+        };
         const COLLECTIONS = { unsplash: 'ocVKfLLqYe0', pexels: 'iczmqkr' };
+        
+        // -------------------------------------------------------------
+        // LISTA COMPLETA DA SUA COLEÇÃO (236 Imagens)
+        // -------------------------------------------------------------
+        const MY_PIXABAY_IDS = [
+            '8393246', '2227877', '5318966', '616115', '4885819', '8816826', '8570923', '32128', '5650205', '7390809', '8199170', '1650654', '9178602', '6342352', '183851', '6948539', '5855647', '3632960', '9739973', '1741503', '3998383', '648683', '54999', '4847720', '48369', '1650656', '8445839', '189846', '1274007', '2006631', '633645', '9576120', '2799591', '1093721', '8113437', '890789', '8801923', '510835', '7157843', '4253785', '8107577', '8399954', '667988', '2548295', '2493028', '1091030', '9782660', '1296945', '7219666', '151687', '150383', '71078', '2104971', '7148270', '1049257', '7030991', '1194269', '4356893', '1027363', '1085072', '5763007', '5357423', '5318907', '8302760', '2669428', '4865391', '5264378', '9842188', '8882306', '7715678', '9059657', '8308564', '951230', '7219905', '1651325', '2427248', '4689366', '6626563', '7126952', '8629745', '2607117', '5073835', '5008963', '1174428', '1436071', '5366115', '6578717', '1297367', '5703426', '71853', '5504700', '4011566', '1846585', '32079', '84791', '738410', '1118489', '8534168', '4169876', '8703546', '7269293', '4946614', '795307', '5131548', '7986593', '5619819', '5431465', '8835825', '9923741', '51320', '3557974', '3557975', '2025145', '7081582', '1487732', '7039742', '9038288', '1152551', '9022127', '5318959', '164872', '4635992', '6539426', '3943823', '4268881', '4916657', '8787434', '9297793', '8101094', '9036820', '8583606', '7105870', '4888534', '2073609', '3114054', '2659485', '4717604', '188717', '41372', '8629711', '5324169', '5432392', '2540240', '1235456', '101632', '6578685', '464236', '6012214', '1868140', '7415507', '3170560', '5225062', '1089315', '5299943', '8760744', '1225027', '1872189', '1429481', '5665758', '3185967', '2688069', '311825', '8898455', '8573581', '3330639', '156732', '530058', '937618', '8684144', '5165667', '8853458', '1299836', '5423937', '4746778', '5217533', '8154131', '1296315', '9060542', '5318910', '4782709', '2640743', '4688793', '154587', '3251656', '4847723', '152214', '8740293', '8101095', '7633370', '3711060', '168884', '7510792', '2112196', '2950077', '6658445', '5020342', '8511567', '5476358', '7418284', '4867422', '4840084', '4391667', '154881', '7311821', '4501881', '8153670', '5961564', '7101111', '5562981', '5225063', '8261447', '1269775', '1194175', '7715674', '8946284', '8191910', '8703535', '6250232', '2676030', '2749363', '7710344', '8679459', '307883', '8534442', '7203224', '9069956', '3309033', '3530788', '3884205', '2124053', '7030993', '8158908', '3525676', '7030994', '6863687', '3521070'
+        ];
+        // -------------------------------------------------------------
 
         const LEVELS = {
             easy:   { rows: 3, cols: 4, total: 12, fontSize: 'clamp(1.5rem, 5cqw, 3.5rem)' }, 
@@ -320,7 +334,7 @@
         let roundInteractionStarted = false;
         let timerInterval = null, timeLeft = 0, isTimeout = false;
         let pexelsTotalPhotos = 0;
-        let gameStarted = false; // Flag para controlar se o jogo começou
+        let gameStarted = false; 
 
         function formatTime(s) { if(s >= 9999) return "∞"; const m = Math.floor(s / 60); const sec = s % 60; return `${m < 10 ? '0'+m : m}:${sec < 10 ? '0'+sec : sec}`; }
         function stopTimer() { if(timerInterval) clearInterval(timerInterval); document.querySelectorAll('.timer-display').forEach(el => { el.classList.remove('visible', 'warning'); el.innerText = ""; }); }
@@ -341,36 +355,68 @@
 
         function updateUI() { document.getElementById('history-count').innerText = `Imagens únicas vistas: ${usedHistory.length}`; document.getElementById('score1').innerText = score1; document.getElementById('score2').innerText = score2; }
 
-        async function fetchImage() {
-            const source = document.getElementById('image-source').value;
+        // --- SISTEMA DE SELEÇÃO ALEATÓRIA ---
+        function pickRandomSource() {
+            const sources = ['unsplash', 'pexels', 'pixabay'];
+            return sources[Math.floor(Math.random() * sources.length)];
+        }
+
+        async function fetchImage(overrideSource = null) {
+            let source = overrideSource || document.getElementById('image-source').value;
+            
+            // SE FOR "ALL", SORTEIA UM
+            if (source === 'all') {
+                source = pickRandomSource();
+                console.log("Sorteado para esta rodada:", source);
+            }
+
             for (let i = 0; i < 10; i++) {
                 try {
                     let id = null; let url = ''; let desc = '';
-                    if (source === 'unsplash') {
+                    
+                    if (source === 'pixabay') {
+                        // --- PIXABAY ---
+                        if(MY_PIXABAY_IDS.length === 0) throw new Error("Pixabay Empty list");
+                        const availableIds = MY_PIXABAY_IDS.filter(pid => !usedHistory.includes('pix_' + pid));
+                        if(availableIds.length === 0) throw new Error("Pixabay all used");
+                        const randomId = availableIds[Math.floor(Math.random() * availableIds.length)];
+                        const r = await fetch(`https://pixabay.com/api/?key=${KEYS.pixabay}&id=${randomId}`);
+                        if (!r.ok) throw new Error('Pixabay API Error');
+                        const d = await r.json();
+                        if (d.hits && d.hits.length > 0) {
+                            id = 'pix_' + d.hits[0].id; url = d.hits[0].largeImageURL; desc = "Imagem Pixabay"; 
+                        } else throw new Error('Pixabay ID not found');
+
+                    } else if (source === 'unsplash') {
+                        // --- UNSPLASH ---
                         const r = await fetch(`https://api.unsplash.com/photos/random?client_id=${KEYS.unsplash}&collections=${COLLECTIONS.unsplash}&t=${Date.now()}`);
                         if (!r.ok) throw new Error('Unsplash API Error');
                         const d = await r.json();
-                        id = d.id; url = d.urls.regular; desc = d.alt_description || d.description || "Imagem Misteriosa";
+                        id = d.id; url = d.urls.regular; desc = d.alt_description || d.description || "Imagem Unsplash";
+
                     } else {
-                        let pageToFetch = 1;
-                        if (pexelsTotalPhotos === 0) { pageToFetch = 1; } else { pageToFetch = Math.floor(Math.random() * pexelsTotalPhotos) + 1; }
+                        // --- PEXELS ---
+                        let pageToFetch = pexelsTotalPhotos === 0 ? 1 : Math.floor(Math.random() * pexelsTotalPhotos) + 1;
                         const r = await fetch(`https://api.pexels.com/v1/collections/${COLLECTIONS.pexels}?per_page=1&page=${pageToFetch}`, { headers: { Authorization: KEYS.pexels } });
                         if (!r.ok) throw new Error('Pexels API Error');
                         const d = await r.json();
                         if (d.total_results) pexelsTotalPhotos = d.total_results;
                         if (d.media && d.media.length > 0) {
-                            const photo = d.media[0];
-                            if (photo.type === 'Video') throw new Error('Video ignored');
-                            id = photo.id.toString(); url = photo.src.large2x; desc = photo.alt || "Imagem Misteriosa";
-                        } else {
-                            if(pageToFetch !== 1) { pexelsTotalPhotos = 0; continue; }
-                            throw new Error('Pexels no photos');
-                        }
+                            if (d.media[0].type === 'Video') throw new Error('Video ignored');
+                            id = d.media[0].id.toString(); url = d.media[0].src.large2x; desc = d.media[0].alt || "Imagem Pexels";
+                        } else throw new Error('Pexels no photos');
                     }
+
                     if (id && url && !usedHistory.includes(id)) {
                         usedHistory.push(id); localStorage.setItem('srick_history', JSON.stringify(usedHistory)); return { id, url, description: desc };
                     }
-                } catch (e) { console.warn(`Erro buscando imagem`, e); }
+                } catch (e) { 
+                    console.warn(`Erro buscando no ${source}, tentando outro...`, e); 
+                    // Se falhar e estivermos no modo 'all', tenta outro source na próxima iteração
+                    if(document.getElementById('image-source').value === 'all') {
+                        source = pickRandomSource();
+                    }
+                }
             }
             usedHistory = []; localStorage.removeItem('srick_history'); return fetchImage();
         }
@@ -399,7 +445,7 @@
             
             const img = document.getElementById('secret-image'); img.classList.remove('loaded');
             
-            // --- LÓGICA DE DIFICULDADE (Aplicada dinamicamente) ---
+            // --- LÓGICA DE DIFICULDADE ---
             const levelKey = document.getElementById('difficulty-level').value;
             const levelData = LEVELS[levelKey];
             currentTotalPanels = levelData.total;
@@ -500,7 +546,6 @@
 
         document.getElementById('team1-btn').onclick = () => reveal('team1');
         document.getElementById('team2-btn').onclick = () => reveal('team2');
-        // Botão principal chama o fluxo de início agora
         document.getElementById('new-game-btn').onclick = startGameFlow;
         document.getElementById('team1-win').onclick = () => { score1++; checkWin('Equipe Vermelha'); };
         document.getElementById('team2-win').onclick = () => { score2++; checkWin('Equipe Azul'); };
@@ -522,7 +567,6 @@
 
         function finishRound() { stopTimer(); const d = document.getElementById('answer-display'); d.innerText = `RESPOSTA: ${window.currentName}`; d.style.display = 'block'; revealAll(); }
 
-        // Não chamamos startNewGame() automaticamente mais. O jogo começa parado.
         updateUI(); 
     </script>
 </body>
